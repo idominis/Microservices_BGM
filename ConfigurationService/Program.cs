@@ -1,25 +1,38 @@
+using Consul;
+using Winton.Extensions.Configuration.Consul;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add Consul Configuration
+builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
+{
+    config.AddConsul(
+        $"{hostingContext.HostingEnvironment.ApplicationName}/{hostingContext.HostingEnvironment.EnvironmentName}",
+        options =>
+        {
+            options.ConsulConfigurationOptions = cco =>
+            {
+                cco.Address = new Uri("http://localhost:8500"); // Consul server address
+            };
+            options.Optional = true;
+            options.ReloadOnChange = true;
+            options.OnLoadException = exceptionContext => { exceptionContext.Ignore = true; };
+        });
+});
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Add services to the DI container.
+builder.Services.AddSingleton<IConsulClient, ConsulClient>(p => new ConsulClient(consulConfig =>
+{
+    // Consul configuration setup
+    var address = builder.Configuration["Consul:Host"];
+    consulConfig.Address = new Uri(address);
+}));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
+// Middleware pipeline configuration
+app.UseRouting();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
