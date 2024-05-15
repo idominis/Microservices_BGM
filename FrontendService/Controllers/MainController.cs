@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using FrontendService.DTO;
+using System.Collections.Generic;
 
 namespace FrontendService.Controllers
 {
@@ -11,17 +12,15 @@ namespace FrontendService.Controllers
     [Route("api/[controller]")]
     public class MainController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _fileManagementServiceUrl;
-        private readonly string _sftpCommunicationServiceUrl;
-        private readonly string _dataAccessServiceUrl;
+        private readonly HttpClient _fileManagementServiceClient;
+        private readonly HttpClient _sftpCommunicationServiceClient;
+        private readonly HttpClient _dataAccessServiceClient;
 
         public MainController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _httpClient = httpClientFactory.CreateClient();
-            _fileManagementServiceUrl = configuration["BaseAddresses:FileManagementService"];
-            _sftpCommunicationServiceUrl = configuration["BaseAddresses:SFTPCommunicationService"];
-            _dataAccessServiceUrl = configuration["BaseAddresses:DataAccessService"];
+            _fileManagementServiceClient = httpClientFactory.CreateClient("FileManagementServiceClient");
+            _sftpCommunicationServiceClient = httpClientFactory.CreateClient("SFTPCommunicationServiceClient");
+            _dataAccessServiceClient = httpClientFactory.CreateClient("DataAccessServiceClient");
         }
 
         [HttpGet]
@@ -34,7 +33,7 @@ namespace FrontendService.Controllers
         public async Task<IActionResult> SavePODToDb()
         {
             var podDetails = await FetchPODetailsAsync();
-            var response = await _httpClient.PostAsJsonAsync($"{_dataAccessServiceUrl}/api/data/save-pod", podDetails);
+            var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-pod", podDetails);
             if (response.IsSuccessStatusCode)
             {
                 ViewBag.Message = "POD saved successfully!";
@@ -50,7 +49,7 @@ namespace FrontendService.Controllers
         public async Task<IActionResult> SavePOHToDb()
         {
             var pohHeaders = await FetchPOHeadersAsync();
-            var response = await _httpClient.PostAsJsonAsync($"{_dataAccessServiceUrl}/api/data/save-poh", pohHeaders);
+            var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-poh", pohHeaders);
             if (response.IsSuccessStatusCode)
             {
                 ViewBag.Message = "POH saved successfully!";
@@ -65,7 +64,7 @@ namespace FrontendService.Controllers
         [HttpPost("generate-xml")]
         public async Task<IActionResult> GenerateXml()
         {
-            var response = await _httpClient.PostAsync($"{_fileManagementServiceUrl}/api/file/generate", null);
+            var response = await _fileManagementServiceClient.PostAsync("api/file/generate", null);
             if (response.IsSuccessStatusCode)
             {
                 ViewBag.Message = "XML generated successfully!";
@@ -80,7 +79,7 @@ namespace FrontendService.Controllers
         [HttpPost("send-xml")]
         public async Task<IActionResult> SendXml()
         {
-            var response = await _httpClient.PostAsync($"{_sftpCommunicationServiceUrl}/api/sftp/upload", null);
+            var response = await _sftpCommunicationServiceClient.PostAsync("api/sftp/upload", null);
             if (response.IsSuccessStatusCode)
             {
                 ViewBag.Message = "XML sent successfully!";
@@ -92,15 +91,35 @@ namespace FrontendService.Controllers
             return View("Index");
         }
 
+        [HttpPost("fetch-xml")]
         private async Task<List<PurchaseOrderDetailDto>> FetchPODetailsAsync()
         {
-            // Fetch POD details from somewhere
+            var filePath = "C:\\Users\\ido\\Documents\\BGM_project\\local\\data_received\\2011-04-23\\PurchaseOrderDetail1.xml";
+            var typeName = "FileManagementService.Models.PurchaseOrderDetails"; // Adjust the type name accordingly
+
+            var response = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/load-xml?filePath={Uri.EscapeDataString(filePath)}&typeName={Uri.EscapeDataString(typeName)}");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<PurchaseOrderDetails>();
+                if (result != null)
+                {
+                    var podDetails = new List<PurchaseOrderDetailDto>();
+                    foreach (var summary in result.Details)
+                    {
+                        podDetails.Add(new PurchaseOrderDetailDto
+                        {
+                            PurchaseOrderDetailId = summary.PurchaseOrderDetailId,
+                        });
+                    }
+                    return podDetails;
+                }
+            }
+
             return new List<PurchaseOrderDetailDto>();
         }
 
         private async Task<List<PurchaseOrderHeaderDto>> FetchPOHeadersAsync()
         {
-            // Fetch POH headers from somewhere
             return new List<PurchaseOrderHeaderDto>();
         }
     }
