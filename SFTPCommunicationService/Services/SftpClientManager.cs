@@ -1,4 +1,5 @@
 ﻿using Renci.SshNet;
+using ConnectionInfo = Renci.SshNet.ConnectionInfo;
 
 namespace SFTPCommunicationService.Services
 {
