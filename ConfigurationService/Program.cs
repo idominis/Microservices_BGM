@@ -1,38 +1,54 @@
 using Consul;
-using Winton.Extensions.Configuration.Consul;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Consul Configuration
-builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
-{
-    config.AddConsul(
-        $"{hostingContext.HostingEnvironment.ApplicationName}/{hostingContext.HostingEnvironment.EnvironmentName}",
-        options =>
-        {
-            options.ConsulConfigurationOptions = cco =>
-            {
-                cco.Address = new Uri("http://localhost:8500"); // Consul server address
-            };
-            options.Optional = true;
-            options.ReloadOnChange = true;
-            options.OnLoadException = exceptionContext => { exceptionContext.Ignore = true; };
-        });
-});
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Add services to the DI container.
+// Add Consul service
 builder.Services.AddSingleton<IConsulClient, ConsulClient>(p => new ConsulClient(consulConfig =>
 {
-    // Consul configuration setup
-    var address = builder.Configuration["Consul:Host"];
+    var address = builder.Configuration["ConsulConfig:Address"];
     consulConfig.Address = new Uri(address);
 }));
 
 var app = builder.Build();
 
-// Middleware pipeline configuration
-app.UseRouting();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// Register the service with Consul
+var lifetime = app.Lifetime;
+var consulClient = app.Services.GetRequiredService<IConsulClient>();
+
+var registration = new AgentServiceRegistration()
+{
+    ID = "DataAccessService", // Unique ID for the service
+    Name = "DataAccessService",
+    Address = "localhost",
+    Port = 7238,
+    Tags = new[] { "DataAccessService" }
+};
+
+lifetime.ApplicationStarted.Register(() => {
+    consulClient.Agent.ServiceDeregister(registration.ID).ConfigureAwait(true);
+    consulClient.Agent.ServiceRegister(registration).ConfigureAwait(true);
+});
+
+lifetime.ApplicationStopped.Register(() => {
+    consulClient.Agent.ServiceDeregister(registration.ID).ConfigureAwait(true);
+});
 
 app.Run();

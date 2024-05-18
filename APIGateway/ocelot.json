@@ -1,3 +1,32 @@
 {
-
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/FileManagementService/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "FileManagementService",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      },
+      "UpstreamPathTemplate": "/filemanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/DataAccessService/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "DataAccessService",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      },
+      "UpstreamPathTemplate": "/dataaccess/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "ServiceDiscoveryProvider": {
+      "Type": "Consul",
+      "Scheme": "http",
+      "Host": "localhost",
+      "Port": 8500
+    }
+  }
 }
