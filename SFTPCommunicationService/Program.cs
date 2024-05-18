@@ -1,11 +1,15 @@
+using SFTPCommunicationService.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Register the SFTP services
+builder.Services.AddSingleton<SftpClientManager>(sp => new SftpClientManager("sftp-host", "username", "password"));
+builder.Services.AddSingleton<SftpFileHandler>();
 
 var app = builder.Build();
 
