@@ -10,6 +10,7 @@ builder.Services.AddHttpClient("FileManagementServiceClient", client =>
         throw new ArgumentNullException(nameof(baseAddress), "Base address for FileManagementService is not configured.");
     }
     client.BaseAddress = new Uri(baseAddress);
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 builder.Services.AddHttpClient("SFTPCommunicationServiceClient", client =>
 {

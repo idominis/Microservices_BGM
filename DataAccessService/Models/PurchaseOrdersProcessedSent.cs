@@ -3,19 +3,15 @@
 using System;
 using System.Collections.Generic;
 
-namespace DataAccessService.Models;
-
-public partial class PurchaseOrdersProcessedSent
+namespace DataAccessService.Models
 {
-    public int PurchaseOrderSentId { get; set; }
-
-    public int PurchaseOrderId { get; set; }
-
-    public bool OrderProcessed { get; set; }
-
-    public bool OrderSent { get; set; }
-
-    public int Channel { get; set; }
-
-    public DateTime ModifiedDate { get; set; }
+    public partial class PurchaseOrdersProcessedSent
+    {
+        public int PurchaseOrderId { get; set; }
+        public int PurchaseOrderDetailId { get; set; }
+        public bool OrderProcessed { get; set; }
+        public bool OrderSent { get; set; }
+        public int Channel { get; set; }
+        public DateTime ModifiedDate { get; set; }
+    }
 }

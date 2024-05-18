@@ -37,7 +37,7 @@ namespace FileManagementService.Services
             }
 
             XmlSchemaSet schemas = new XmlSchemaSet();
-            //schemas.Add("", "path_to_your_xsd_file"); // Update the schema path as needed
+            schemas.Add("", "C:\\Users\\ido\\source\\repos\\Monolith_BGM\\Monolith_BGM\\Tools\\purchaseOrderDetails.xsd");
 
             XmlReaderSettings settings = new XmlReaderSettings
             {

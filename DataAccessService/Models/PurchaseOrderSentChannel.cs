@@ -3,13 +3,12 @@
 using System;
 using System.Collections.Generic;
 
-namespace DataAccessService.Models;
-
-public partial class PurchaseOrderSentChannel
+namespace DataAccessService.Models
 {
-    public int PurchaseOrderSentChannelId { get; set; }
-
-    public string Name { get; set; }
-
-    public bool? Active { get; set; }
+    public partial class PurchaseOrderSentChannel
+    {
+        public int PurchaseOrderSentChannelId { get; set; }
+        public string Name { get; set; }
+        public bool? Active { get; set; }
+    }
 }
