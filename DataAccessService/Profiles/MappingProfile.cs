@@ -9,6 +9,7 @@ namespace DataAccessService.Profiles
         public MappingProfile()
         {
             CreateMap<PurchaseOrderDetailDto, PurchaseOrderDetail>().ReverseMap();
+            CreateMap<PurchaseOrderHeaderDto, PurchaseOrderHeader>().ReverseMap();
         }
     }
 }

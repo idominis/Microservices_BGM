@@ -1,8 +1,7 @@
 ﻿using System.Xml.Serialization;
 
-namespace FileManagementService.Models
+namespace OrderManagementService.DTO
 {
-    [XmlRoot("PurchaseOrderDetails")]
     public class PurchaseOrderDetails
     {
         [XmlElement("PurchaseOrderDetail")]

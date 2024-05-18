@@ -59,5 +59,41 @@ namespace DataAccessService.Controllers
                 return Ok("No new purchase orders details to save.");
             }
         }
+
+        [HttpPost("save-poh")]
+        public async Task<IActionResult> SavePOHToDb([FromBody] List<PurchaseOrderHeaderDto> podHeaders)
+        {
+            if (podHeaders == null || !podHeaders.Any())
+            {
+                return BadRequest("No purchase order details provided.");
+            }
+
+            var existingIds = new HashSet<int>(_context.PurchaseOrderHeaders.Select(p => p.PurchaseOrderId));
+            var newHeaders = podHeaders
+                .Where(dto => !existingIds.Contains(dto.PurchaseOrderId))
+                .Select(dto => _mapper.Map<PurchaseOrderHeader>(dto))
+                .ToList();
+
+            if (newHeaders.Any())
+            {
+                await _context.PurchaseOrderHeaders.AddRangeAsync(newHeaders);
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    string headerIds = string.Join(", ", newHeaders.Select(h => h.PurchaseOrderId));
+                    Log.Information($"Purchase order headers: {headerIds} loaded and saved successfully!");
+                    return Ok("Purchase order headers saved successfully!");
+                }
+                catch (DbUpdateException ex)
+                {
+                    Log.Error(ex, "Error updating the database with new purchase order headers.");
+                    return StatusCode(500, "Internal server error");
+                }
+            }
+            else
+            {
+                return Ok("No new purchase orders headers to save.");
+            }
+        }
     }
 }

@@ -10,17 +10,20 @@ namespace FrontendService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MainController : ControllerBase
+    public class FrontendController : ControllerBase
     {
-        private readonly HttpClient _fileManagementServiceClient;
-        private readonly HttpClient _sftpCommunicationServiceClient;
-        private readonly HttpClient _dataAccessServiceClient;
+        //private readonly HttpClient _fileManagementServiceClient;
+        //private readonly HttpClient _sftpCommunicationServiceClient;
+        //private readonly HttpClient _dataAccessServiceClient;
+        private readonly HttpClient _orderManagementServiceClient;
 
-        public MainController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public FrontendController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _fileManagementServiceClient = httpClientFactory.CreateClient("FileManagementServiceClient");
-            _sftpCommunicationServiceClient = httpClientFactory.CreateClient("SFTPCommunicationServiceClient");
-            _dataAccessServiceClient = httpClientFactory.CreateClient("DataAccessServiceClient");
+            //_fileManagementServiceClient = httpClientFactory.CreateClient("FileManagementServiceClient");
+            //_sftpCommunicationServiceClient = httpClientFactory.CreateClient("SFTPCommunicationServiceClient");
+            //_dataAccessServiceClient = httpClientFactory.CreateClient("DataAccessServiceClient");
+            _orderManagementServiceClient = httpClientFactory.CreateClient("OrderManagementServiceClient");
+
         }
 
         [HttpGet]
@@ -29,11 +32,25 @@ namespace FrontendService.Controllers
             return Ok("Index action is temporarily disabled for view rendering.");
         }
 
+        //[HttpPost("save-pod")]
+        //public async Task<IActionResult> SavePODToDb()
+        //{
+        //    var podDetails = await FetchPODetailsAsync();
+        //    var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-pod", podDetails);
+        //    if (response.IsSuccessStatusCode)
+        //    {
+        //        return Ok("POD saved successfully!");
+        //    }
+        //    else
+        //    {
+        //        return StatusCode((int)response.StatusCode, "Failed to save POD.");
+        //    }
+        //}
+
         [HttpPost("save-pod")]
         public async Task<IActionResult> SavePODToDb()
         {
-            var podDetails = await FetchPODetailsAsync();
-            var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-pod", podDetails);
+            var response = await _orderManagementServiceClient.PostAsync("api/orders/save-pod", null);
             if (response.IsSuccessStatusCode)
             {
                 return Ok("POD saved successfully!");
@@ -43,12 +60,13 @@ namespace FrontendService.Controllers
                 return StatusCode((int)response.StatusCode, "Failed to save POD.");
             }
         }
-
         [HttpPost("save-poh")]
         public async Task<IActionResult> SavePOHToDb()
         {
             var pohHeaders = await FetchPOHeadersAsync();
-            var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-poh", pohHeaders);
+            //var response = await _dataAccessServiceClient.PostAsJsonAsync("api/data/save-poh", pohHeaders);
+            var response = await _orderManagementServiceClient.PostAsync("api/orders/save-poh", null);
+
             if (response.IsSuccessStatusCode)
             {
                 return Ok("POH saved successfully!");
@@ -62,7 +80,9 @@ namespace FrontendService.Controllers
         [HttpPost("generate-xml")]
         public async Task<IActionResult> GenerateXml()
         {
-            var response = await _fileManagementServiceClient.PostAsync("api/file/generate", null);
+            //var response = await _fileManagementServiceClient.PostAsync("api/file/generate", null);
+            var response = await _orderManagementServiceClient.PostAsync("api/orders/generate-xml", null);
+
             if (response.IsSuccessStatusCode)
             {
                 return Ok("XML generated successfully!");
@@ -76,7 +96,9 @@ namespace FrontendService.Controllers
         [HttpPost("send-xml")]
         public async Task<IActionResult> SendXml()
         {
-            var response = await _sftpCommunicationServiceClient.PostAsync("api/sftp/upload", null);
+            //var response = await _sftpCommunicationServiceClient.PostAsync("api/sftp/upload", null);
+            var response = await _orderManagementServiceClient.PostAsync("api/orders/send-xml", null);
+
             if (response.IsSuccessStatusCode)
             {
                 return Ok("XML sent successfully!");
@@ -92,7 +114,8 @@ namespace FrontendService.Controllers
             var filePath = "C:\\Users\\ido\\Documents\\BGM_project\\local\\data_received\\2011-04-23\\PurchaseOrderDetail1.xml";
             var typeName = "FileManagementService.Models.PurchaseOrderDetails"; // Adjust the type name accordingly
 
-            var response = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/load-xml?filePath={Uri.EscapeDataString(filePath)}&typeName={Uri.EscapeDataString(typeName)}");
+            //var response = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/load-xml?filePath={Uri.EscapeDataString(filePath)}&typeName={Uri.EscapeDataString(typeName)}");
+            var response = await _orderManagementServiceClient.GetAsync($"api/FileManagementService/load-xml?filePath={Uri.EscapeDataString(filePath)}&typeName={Uri.EscapeDataString(typeName)}");
 
             if (response.IsSuccessStatusCode)
             {

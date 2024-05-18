@@ -2,7 +2,7 @@
 
 namespace FileManagementService.Models
 {
-    public class PurchaseOrderDetail
+    public class PurchaseOrderDetailDto
     {
         [XmlAttribute]
         public int PurchaseOrderID { get; set; }
