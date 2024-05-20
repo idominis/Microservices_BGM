@@ -168,7 +168,7 @@ namespace OrderManagementService.Services
             {
                 var result = await responseSummaries.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
 
-                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/file/generate-xml", result);
+                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", result);
 
                 if (responseResult.IsSuccessStatusCode)
                 {
