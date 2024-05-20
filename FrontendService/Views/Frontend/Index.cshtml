@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Form</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <h2>Main Form</h2>
+
+    <form id="mainForm" method="post">
+        <div>
+            <button type="button" id="serviceStartButton" class="btn btn-primary">Service Start</button>
+            <button type="button" id="serviceStopButton" class="btn btn-secondary">Service Stop</button>
+        </div>
+
+        <div>
+            <button type="button" id="savePODToDbButton" class="btn btn-success">Save POD to DB</button>
+            <button type="button" id="savePOHToDbButton" class="btn btn-success">Save POH to DB</button>
+        </div>
+
+        <div>
+            <label for="comboBoxStartDate">Start Date:</label>
+            <select id="comboBoxStartDate" class="form-control">
+                <!-- Options can be dynamically populated -->
+                <option value="2021-01-01">2021-01-01</option>
+                <option value="2021-02-01">2021-02-01</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="comboBoxEndDate">End Date:</label>
+            <select id="comboBoxEndDate" class="form-control">
+                <!-- Options can be dynamically populated -->
+                <option value="2021-03-01">2021-03-01</option>
+                <option value="2021-04-01">2021-04-01</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="button" id="generateXmlButton" class="btn btn-info">Generate XML</button>
+            <button type="button" id="sendXmlButton" class="btn btn-warning">Send XML</button>
+        </div>
+
+        <div>
+            <label for="autoSendTextBox">Last Date Sent:</label>
+            <input type="text" id="autoSendTextBox" class="form-control" readonly />
+        </div>
+
+        <div>
+            <label>Auto Send:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOn" value="on">
+                <label class="form-check-label" for="radioButtonOn">On</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOff" value="off">
+                <label class="form-check-label" for="radioButtonOff">Off</label>
+            </div>
+        </div>
+
+        <div>
+            <textarea id="richTextBoxLogs" class="form-control" rows="10" readonly></textarea>
+        </div>
+
+        <div>
+            <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
+        </div>
+    </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("savePODToDbButton").addEventListener("click", function () {
+                fetch('@Url.Action("SavePODToDb", "Frontend")', {
+                    method: 'POST'
+                }).then(response => response.json())
+                    .then(data => logMessage(data))
+                    .catch(error => logMessage('Error: ' + error));
+            });
+
+            document.getElementById("savePOHToDbButton").addEventListener("click", function () {
+                fetch('@Url.Action("SavePOHToDb", "Frontend")', {
+                    method: 'POST'
+                }).then(response => response.json())
+                    .then(data => logMessage(data))
+                    .catch(error => logMessage('Error: ' + error));
+            });
+        });
+
+        function logMessage(message) {
+            const logs = document.getElementById("richTextBoxLogs");
+            logs.value += message + '\n';
+            logs.scrollTop = logs.scrollHeight; // Scroll to the bottom
+        }
+    </script>
+</body>
+</html>
