@@ -79,6 +79,7 @@ namespace FileManagementService.Controllers
             return Ok(new
             {
                 BaseDirectoryPath = _fileManager.GetBaseDirectoryPath(),
+                BaseHeadersDirectoryPath = _fileManager.GetSpecificPath("headers"),
                 BaseDirectoryXmlCreatedPath = _fileManager.GetBaseDirectoryXmlCreatedPath(),
                 RemoteDetailsDirectoryPath = _fileManager.GetRemoteDetailsDirectoryPath(),
                 RemoteHeadersDirectoryPath = _fileManager.GetRemoteHeadersDirectoryPath()

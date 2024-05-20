@@ -6,22 +6,26 @@ namespace SFTPCommunicationService.Services
     public class SftpClientManager
     {
         private readonly ConnectionInfo _connectionInfo;
+        private readonly SftpConfig _config;
 
-        public SftpClientManager(string host, string username, string password)
+        public SftpClientManager(SftpConfig config)
         {
-            _connectionInfo = new ConnectionInfo(host, username, new PasswordAuthenticationMethod(username, password));
+            _config = config;
         }
 
         public SftpClient Connect()
         {
-            var client = new SftpClient(_connectionInfo);
+            var connectionInfo = new ConnectionInfo(_config.Host, _config.Username,
+                new PasswordAuthenticationMethod(_config.Username, _config.Password));
+
+            var client = new SftpClient(connectionInfo);
             try
             {
                 client.Connect();
             }
             catch
             {
-                client.Dispose(); // Ensure disposal if connection fails
+                client.Dispose();
                 throw;
             }
             return client;

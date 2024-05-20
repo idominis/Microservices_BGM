@@ -1,4 +1,4 @@
-﻿namespace DataAccessService.Dto
+﻿namespace DataAccessService.DTO
 {
     public class PurchaseOrderDetailDto
     {

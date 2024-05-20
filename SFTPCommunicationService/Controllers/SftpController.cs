@@ -2,6 +2,7 @@
 using SFTPCommunicationService.Services;
 using System.Collections.Generic;
 using Renci.SshNet.Sftp;
+using SFTPCommunicationService.DTO;
 
 namespace SFTPCommunicationService.Controllers
 {
@@ -26,14 +27,14 @@ namespace SFTPCommunicationService.Controllers
         [HttpPost("upload-file")]
         public IActionResult UploadFile([FromQuery] string localFilePath, [FromQuery] string remoteDirectory)
         {
-            _fileHandler.UploadFile(localFilePath, remoteDirectory);
+            _fileHandler.UploadFileAsync(localFilePath, remoteDirectory);
             return Ok("File uploaded successfully.");
         }
 
         [HttpPost("download-file")]
-        public IActionResult DownloadFile([FromQuery] string remoteFilePath, [FromQuery] string localDirectory)
+        public async Task<IActionResult> DownloadFile([FromBody] FileDownloadRequestDto request)
         {
-            _fileHandler.DownloadFile(remoteFilePath, localDirectory);
+            await _fileHandler.DownloadFile(request.RemoteFilePath, request.LocalDirectory);
             return Ok("File downloaded successfully.");
         }
     }

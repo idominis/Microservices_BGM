@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OrderManagementService.Services;
+using Serilog;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace OrderManagementService.Controllers
 {
@@ -13,6 +15,36 @@ namespace OrderManagementService.Controllers
         public OrdersController(IOrderService orderService)
         {
             _orderService = orderService;
+        }
+
+        [HttpPost("download-file-pod")]
+        public async Task DownloadFilesPODAsync()
+        {
+            var result = await _orderService.DownloadFilesPODAsync();
+
+            if (result)
+            {
+                Log.Information("POD files downloaded successfully.");
+            }
+            else
+            {
+                Log.Error("Failed to download POD files.");
+            }
+        }
+
+        [HttpPost("download-file-poh")]
+        public async Task DownloadFilesPOHAsync()
+        {
+            var result = await _orderService.DownloadFilesPOHAsync();
+
+            if (result)
+            {
+                Log.Information("POH files downloaded successfully.");
+            }
+            else
+            {
+                Log.Error("Failed to download POH files.");
+            }
         }
 
         [HttpPost("save-pod")]

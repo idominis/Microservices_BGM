@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OrderManagementService.DTO;
+using Serilog;
 
 namespace OrderManagementService.Services
 {
@@ -38,6 +39,93 @@ namespace OrderManagementService.Services
             }
 
             throw new KeyNotFoundException($"Path '{pathName}' not found in the response.");
+        }
+
+        public async Task<bool> DownloadFilesPODAsync()
+        {
+            string localBaseDirectoryPath = await GetPathAsync("baseDirectoryPath");
+            string remoteDetailsDirectoryPath = await GetPathAsync("remoteDetailsDirectoryPath");
+
+            var fileDownloadRequest = new FileDownloadRequestDto
+            {
+                RemoteFilePath = remoteDetailsDirectoryPath,
+                LocalDirectory = localBaseDirectoryPath
+            };
+
+            bool shouldRetry = true;
+
+            while (shouldRetry)
+            {
+                try
+                {
+                    var response = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/download-file", fileDownloadRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        //_statusUpdateService.RaiseStatusUpdated($"XML files from {remotePath} have been downloaded successfully!");
+                        Log.Information($"XML files from {fileDownloadRequest.RemoteFilePath} have been downloaded successfully!");
+                        return true;
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        Log.Information($"Server error.");
+                    }
+                    else
+                    {
+                        //_statusUpdateService.RaiseStatusUpdated($"No new XML files in {remotePath}.");
+                        Log.Information($"No new XML files in {fileDownloadRequest.RemoteFilePath}.");
+                    }
+
+                    shouldRetry = false;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> DownloadFilesPOHAsync()
+        {
+            string localBaseDirectoryPath = await GetPathAsync("baseHeadersDirectoryPath");
+            string remoteHeadersDirectoryPath = await GetPathAsync("remoteHeadersDirectoryPath");
+
+            var fileDownloadRequest = new FileDownloadRequestDto
+            {
+                RemoteFilePath = remoteHeadersDirectoryPath,
+                LocalDirectory = localBaseDirectoryPath
+            };
+
+            bool shouldRetry = true;
+
+            while (shouldRetry)
+            {
+                try
+                {
+                    var response = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/download-file", fileDownloadRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Log.Information($"XML files from {fileDownloadRequest.RemoteFilePath} have been downloaded successfully!");
+                        return true;
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        Log.Information($"Server error.");
+                    }
+                    else
+                    {
+                        Log.Information($"No new XML files in {fileDownloadRequest.RemoteFilePath}.");
+                    }
+                    shouldRetry = false;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+            return false;
         }
 
         public async Task<bool> SavePODetailsAsync(List<PurchaseOrderDetailDto> purchaseOrderDetailsDto)

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using DataAccessService.Data;
-using DataAccessService.Dto;
+using DataAccessService.DTO;
 using DataAccessService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
