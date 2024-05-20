@@ -162,17 +162,29 @@ namespace OrderManagementService.Services
 
         public async Task<bool> GenerateXmlAsync()
         {
-            var response = await _fileManagementServiceClient.PostAsync("api/file/generate", null);
-            if (response.IsSuccessStatusCode)
+            var responseSummaries = await _dataAccessServiceClient.GetAsync("api/data/fetch-summaries");
+
+            if(responseSummaries.IsSuccessStatusCode)
             {
-                _logger.LogInformation("XML generated successfully!");
-                return true;
+                var result = await responseSummaries.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
+
+                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/file/generate-xml", result);
+
+                if (responseResult.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("XML generated successfully!");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", responseResult.StatusCode);
+                    return false;
+                }
             }
-            else
-            {
-                _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", response.StatusCode);
-                return false;
-            }
+
+            return false;
+
+
         }
 
         public async Task<bool> SendXmlAsync()

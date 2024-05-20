@@ -95,5 +95,33 @@ namespace DataAccessService.Controllers
                 return Ok("No new purchase orders headers to save.");
             }
         }
+
+        [HttpGet("fetch-summaries")]
+        public async Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummaries()
+        {
+            var viewData = await _context.VPurchaseOrderSummaries.ToListAsync();
+
+            //return _mapper.Map<List<PurchaseOrderSummary>>(viewData);
+            return viewData.Select(v => new PurchaseOrderSummary
+            {
+                PurchaseOrderID = v.PurchaseOrderId,
+                PurchaseOrderDetailID = v.PurchaseOrderDetailId,
+                OrderDate = v.OrderDate,
+                VendorID = v.VendorId,
+                VendorName = v.VendorName,
+                ProductID = v.ProductId,
+                ProductNumber = v.ProductNumber,
+                ProductName = v.ProductName,
+                OrderQty = v.OrderQty,
+                UnitPrice = v.UnitPrice,
+                LineTotal = v.LineTotal,
+                SubTotal = v.SubTotal,
+                TaxAmt = v.TaxAmt,
+                Freight = v.Freight,
+                TotalDue = v.TotalDue
+            }).ToList();
+        }
+
+
     }
 }

@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using DataAccessService.Dto;
+using DataAccessService.DTO;
 using DataAccessService.Models;
 
 namespace DataAccessService.Profiles
@@ -10,6 +10,7 @@ namespace DataAccessService.Profiles
         {
             CreateMap<PurchaseOrderDetailDto, PurchaseOrderDetail>().ReverseMap();
             CreateMap<PurchaseOrderHeaderDto, PurchaseOrderHeader>().ReverseMap();
+            CreateMap<VPurchaseOrderSummary, PurchaseOrderSummary>().ReverseMap();
         }
     }
 }
