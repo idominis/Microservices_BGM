@@ -3,6 +3,7 @@ using DataAccessService.Data;
 using DataAccessService.DTO;
 using DataAccessService.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Serilog;
 using System.Collections.Generic;
 using System.Linq;
@@ -113,5 +114,81 @@ namespace DataAccessService.Services
                 TotalDue = v.TotalDue
             }).ToList();
         }
+
+        public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIdsAsync()
+        {
+            return new HashSet<int>(await _context.PurchaseOrdersProcessedSents
+                .Where(x => x.OrderProcessed) // Filter for OrderProcessed = true
+                .Select(x => x.PurchaseOrderId)
+                .ToListAsync());
+        }
+
+        public async Task<HashSet<int>> FetchAlreadySentPurchaseOrderIdsAsync()
+        {
+            return new HashSet<int>(await _context.PurchaseOrdersProcessedSents
+                .Where(x => x.OrderSent) // Filter for OrderSent = true
+                .Select(x => x.PurchaseOrderId)
+                .ToListAsync());
+        }
+
+        public async Task<bool> UpdatePurchaseOrderStatusAsync(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel)
+        {
+            try
+            {
+                var existingEntity = await _context.PurchaseOrdersProcessedSents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.PurchaseOrderDetailId == purchaseOrderDetailId);
+
+                if (existingEntity != null)
+                {
+                    _context.PurchaseOrdersProcessedSents.Attach(existingEntity);
+                    existingEntity.OrderProcessed = processed;
+                    existingEntity.OrderSent = sent;
+                    existingEntity.Channel = channel;
+                    existingEntity.ModifiedDate = DateTime.Now;
+                }
+                else
+                {
+                    var newEntity = new PurchaseOrdersProcessedSent
+                    {
+                        PurchaseOrderId = purchaseOrderId,
+                        PurchaseOrderDetailId = purchaseOrderDetailId,
+                        OrderProcessed = processed,
+                        OrderSent = sent,
+                        Channel = channel,
+                        ModifiedDate = DateTime.Now
+                    };
+                    _context.PurchaseOrdersProcessedSents.Add(newEntity);
+                }
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle database update exceptions, such as constraint violations
+                Log.Error(ex, "An error occurred while updating the purchase order status in the database.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Handle any other exceptions
+                Log.Error(ex, "An unexpected error occurred while updating the purchase order status.");
+                return false;
+            }
+        }
+
+        public async Task<DateTime?> GetLatestDateForPurchaseOrderAsync(int purchaseOrderId)
+        {
+            var latestDate = await _context.VPurchaseOrderSummaries
+                                              .Where(x => x.PurchaseOrderId == purchaseOrderId)
+                                              .Select(x => x.OrderDate)
+                                              .FirstOrDefaultAsync();
+
+            return latestDate;
+        }
+
+
+
     }
 }

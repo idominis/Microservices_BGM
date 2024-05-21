@@ -79,10 +79,11 @@ namespace FileManagementService.Controllers
             return Ok(new
             {
                 BaseDirectoryPath = _fileManager.GetBaseDirectoryPath(),
-                BaseHeadersDirectoryPath = _fileManager.GetSpecificPath("headers"),
+                BaseHeadersDirectoryPath = _fileManager.GetSpecificLocalPath("headers"),
                 BaseDirectoryXmlCreatedPath = _fileManager.GetBaseDirectoryXmlCreatedPath(),
                 RemoteDetailsDirectoryPath = _fileManager.GetRemoteDetailsDirectoryPath(),
-                RemoteHeadersDirectoryPath = _fileManager.GetRemoteHeadersDirectoryPath()
+                RemoteHeadersDirectoryPath = _fileManager.GetRemoteHeadersDirectoryPath(),
+                RemoteDirectoryPath = _fileManager.GetSpecificRemotePath("\\Uploaded")
             });
         }
     }

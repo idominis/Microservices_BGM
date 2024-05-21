@@ -9,6 +9,7 @@ namespace FileManagementService.Services
         private readonly string _remoteDetailsDirectoryPath;
         private readonly string _remoteHeadersDirectoryPath;
         private readonly string _baseDirectoryXmlCreatedPath;
+        private readonly string _remoteDirectoryPath;
 
         public FileManager()
         {
@@ -17,6 +18,7 @@ namespace FileManagementService.Services
             _baseDirectoryXmlCreatedPath = Path.Combine(documentsPath, "BGM_project", "local", "XML_created");
             _remoteDetailsDirectoryPath = @"\purchasingOrdersDetails";
             _remoteHeadersDirectoryPath = @"\purchasingOrdersHeaders";
+            _remoteDirectoryPath = @"\";
             Directory.CreateDirectory(_baseDirectoryPath);
         }
 
@@ -40,9 +42,16 @@ namespace FileManagementService.Services
             return _remoteHeadersDirectoryPath;
         }
 
-        public string GetSpecificPath(string subDirectory)
+        public string GetSpecificLocalPath(string subDirectory)
         {
             var fullPath = Path.Combine(_baseDirectoryPath, subDirectory);
+            Directory.CreateDirectory(fullPath);
+            return fullPath;
+        }
+
+        public string GetSpecificRemotePath(string subDirectory)
+        {
+            var fullPath = Path.Combine(_remoteDirectoryPath, subDirectory);
             Directory.CreateDirectory(fullPath);
             return fullPath;
         }

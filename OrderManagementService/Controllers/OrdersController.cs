@@ -17,6 +17,20 @@ namespace OrderManagementService.Controllers
             _orderService = orderService;
         }
 
+        [HttpGet("get-path")]
+        public async Task<IActionResult> GetPath([FromQuery] string pathName)
+        {
+            try
+            {
+                var path = await _orderService.GetPathAsync(pathName);
+                return Ok(path);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
         [HttpPost("download-file-pod")]
         public async Task DownloadFilesPODAsync()
         {
@@ -122,18 +136,6 @@ namespace OrderManagementService.Controllers
             }
         }
 
-        [HttpGet("get-path")]
-        public async Task<IActionResult> GetPath([FromQuery] string pathName)
-        {
-            try
-            {
-                var path = await _orderService.GetPathAsync(pathName);
-                return Ok(path);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
+        
     }
 }

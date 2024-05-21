@@ -65,6 +65,30 @@ namespace DataAccessService.Controllers
             return await _dataService.FetchPurchaseOrderSummariesAsync();
         }
 
+        [HttpGet("fetch-generated")]
+        public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIds()
+        {
+            return await _dataService.FetchAlreadyGeneratedPurchaseOrderIdsAsync();
+        }
+
+        [HttpGet("fetch-sent")]
+        public async Task<HashSet<int>> FetchAlreadySentPurchaseOrderIds()
+        {
+            return await _dataService.FetchAlreadySentPurchaseOrderIdsAsync();
+        }
+
+        [HttpGet("update-po-status")]
+        public async Task<bool> UpdatePurchaseOrderStatus(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel)
+        {
+            return await _dataService.UpdatePurchaseOrderStatusAsync(purchaseOrderId, purchaseOrderDetailId, processed, sent, channel);
+        }
+
+        [HttpGet("get-po-latest-date")]
+        public async Task<DateTime?> GetLatestDateForPurchaseOrder(int purchaseOrderId)
+        {
+            return await _dataService.GetLatestDateForPurchaseOrderAsync(purchaseOrderId);
+        }
+
 
     }
 }
