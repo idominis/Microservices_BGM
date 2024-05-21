@@ -2,6 +2,7 @@
 using DataAccessService.Data;
 using DataAccessService.DTO;
 using DataAccessService.Models;
+using DataAccessService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -15,111 +16,53 @@ namespace DataAccessService.Controllers
     [Route("api/[controller]")]
     public class DataController : ControllerBase
     {
-        private readonly BgmDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly IDataService _dataService;
 
-        public DataController(BgmDbContext context, IMapper mapper)
+        public DataController(IDataService dataService)
         {
-            _context = context;
-            _mapper = mapper;
+            _dataService = dataService;
         }
 
         [HttpPost("save-pod")]
         public async Task<IActionResult> SavePODToDb([FromBody] List<PurchaseOrderDetailDto> podDetails)
         {
-            if (podDetails == null || !podDetails.Any())
+            var result = await _dataService.SavePODToDbAsync(podDetails);
+            if (result == "Purchase order details saved successfully!")
             {
-                return BadRequest("No purchase order details provided.");
+                return Ok(result);
             }
-
-            var existingIds = new HashSet<int>(_context.PurchaseOrderDetails.Select(p => p.PurchaseOrderDetailId));
-            var newDetails = podDetails
-                .Where(dto => !existingIds.Contains(dto.PurchaseOrderDetailId))
-                .Select(dto => _mapper.Map<PurchaseOrderDetail>(dto))
-                .ToList();
-
-            if (newDetails.Any())
+            else if (result == "No purchase order details provided." || result == "No new purchase orders details to save.")
             {
-                await _context.PurchaseOrderDetails.AddRangeAsync(newDetails);
-                try
-                {
-                    await _context.SaveChangesAsync();
-                    string detailIds = string.Join(", ", newDetails.Select(h => h.PurchaseOrderDetailId));
-                    Log.Information($"Purchase order details: {detailIds} loaded and saved successfully!");
-                    return Ok("Purchase order details saved successfully!");
-                }
-                catch (DbUpdateException ex)
-                {
-                    Log.Error(ex, "Error updating the database with new purchase order details.");
-                    return StatusCode(500, "Internal server error");
-                }
+                return BadRequest(result);
             }
             else
             {
-                return Ok("No new purchase orders details to save.");
+                return StatusCode(500, result);
             }
         }
 
         [HttpPost("save-poh")]
         public async Task<IActionResult> SavePOHToDb([FromBody] List<PurchaseOrderHeaderDto> podHeaders)
         {
-            if (podHeaders == null || !podHeaders.Any())
+            var result = await _dataService.SavePOHToDbAsync(podHeaders);
+            if (result == "Purchase order headers saved successfully!")
             {
-                return BadRequest("No purchase order details provided.");
+                return Ok(result);
             }
-
-            var existingIds = new HashSet<int>(_context.PurchaseOrderHeaders.Select(p => p.PurchaseOrderId));
-            var newHeaders = podHeaders
-                .Where(dto => !existingIds.Contains(dto.PurchaseOrderId))
-                .Select(dto => _mapper.Map<PurchaseOrderHeader>(dto))
-                .ToList();
-
-            if (newHeaders.Any())
+            else if (result == "No purchase order headers provided." || result == "No new purchase orders headers to save.")
             {
-                await _context.PurchaseOrderHeaders.AddRangeAsync(newHeaders);
-                try
-                {
-                    await _context.SaveChangesAsync();
-                    string headerIds = string.Join(", ", newHeaders.Select(h => h.PurchaseOrderId));
-                    Log.Information($"Purchase order headers: {headerIds} loaded and saved successfully!");
-                    return Ok("Purchase order headers saved successfully!");
-                }
-                catch (DbUpdateException ex)
-                {
-                    Log.Error(ex, "Error updating the database with new purchase order headers.");
-                    return StatusCode(500, "Internal server error");
-                }
+                return BadRequest(result);
             }
             else
             {
-                return Ok("No new purchase orders headers to save.");
+                return StatusCode(500, result);
             }
         }
 
         [HttpGet("fetch-summaries")]
         public async Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummaries()
         {
-            var viewData = await _context.VPurchaseOrderSummaries.ToListAsync();
-
-            //return _mapper.Map<List<PurchaseOrderSummary>>(viewData);
-            return viewData.Select(v => new PurchaseOrderSummary
-            {
-                PurchaseOrderID = v.PurchaseOrderId,
-                PurchaseOrderDetailID = v.PurchaseOrderDetailId,
-                OrderDate = v.OrderDate,
-                VendorID = v.VendorId,
-                VendorName = v.VendorName,
-                ProductID = v.ProductId,
-                ProductNumber = v.ProductNumber,
-                ProductName = v.ProductName,
-                OrderQty = v.OrderQty,
-                UnitPrice = v.UnitPrice,
-                LineTotal = v.LineTotal,
-                SubTotal = v.SubTotal,
-                TaxAmt = v.TaxAmt,
-                Freight = v.Freight,
-                TotalDue = v.TotalDue
-            }).ToList();
+            return await _dataService.FetchPurchaseOrderSummariesAsync();
         }
 
 

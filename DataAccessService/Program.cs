@@ -1,4 +1,5 @@
 using DataAccessService.Data;
+using DataAccessService.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<BgmDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAutoMapper(typeof(Program));
+
+// Register DataService and IDataService
+builder.Services.AddScoped<IDataService, DataService>();
 
 var app = builder.Build();
 
