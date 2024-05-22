@@ -115,6 +115,15 @@ namespace DataAccessService.Services
             }).ToList();
         }
 
+        public async Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummariesByDateAsync(DateTime startDate, DateTime endDate)
+        {
+            var viewData = await _context.VPurchaseOrderSummaries
+                .Where(p => p.OrderDate >= startDate && p.OrderDate <= endDate)
+                .ToListAsync();
+
+            return _mapper.Map<List<PurchaseOrderSummary>>(viewData);
+        }
+
         public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIdsAsync()
         {
             return new HashSet<int>(await _context.PurchaseOrdersProcessedSents

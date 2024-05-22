@@ -23,7 +23,7 @@ namespace FileManagementService.Services
         {
             string localBaseDirectoryPath = _fileManager.GetBaseDirectoryPath();
             string localBaseDirectoryXmlCreatedPath = _fileManager.GetBaseDirectoryXmlCreatedPath();
-
+    
             // Collect all directories from both base paths
             IEnumerable<string> directories = Directory.GetDirectories(localBaseDirectoryPath, "*", SearchOption.AllDirectories)
                 .Concat(new[] { localBaseDirectoryXmlCreatedPath }); // Add XML_created path without subdirectories

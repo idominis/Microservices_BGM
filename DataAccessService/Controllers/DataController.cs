@@ -65,6 +65,13 @@ namespace DataAccessService.Controllers
             return await _dataService.FetchPurchaseOrderSummariesAsync();
         }
 
+        [HttpPost("fetch-summaries-date")]
+        public async Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummariesByDate([FromBody] DateRangeDto dateRange)
+        {
+            return await _dataService.FetchPurchaseOrderSummariesByDateAsync(dateRange.StartDate, dateRange.EndDate);
+        }
+
+
         [HttpGet("fetch-generated")]
         public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIds()
         {

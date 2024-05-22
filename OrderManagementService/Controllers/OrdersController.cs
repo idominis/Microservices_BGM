@@ -136,6 +136,20 @@ namespace OrderManagementService.Controllers
             }
         }
 
-        
+        [HttpPost("send-xml-date")]
+        public async Task<IActionResult> SendDateGeneratedXml(DateTime startDate, DateTime endDate)
+        {
+            var result = await _orderService.SendDateGeneratedXmlAsync(startDate, endDate);
+            if (result)
+            {
+                return Ok("XML by date sent successfully!");
+            }
+            else
+            {
+                return StatusCode(500, "Failed to send XML by date.");
+            }
+        }
+
+
     }
 }
