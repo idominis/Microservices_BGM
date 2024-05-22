@@ -22,12 +22,27 @@ namespace FileManagementService.Services
         public object LoadFromXml(string filePath, string typeName)
         {
             string localBaseDirectoryPath = _fileManager.GetBaseDirectoryPath();
-            IEnumerable<string> directories = Directory.GetDirectories(localBaseDirectoryPath, "*", SearchOption.AllDirectories);
+            string localBaseDirectoryXmlCreatedPath = _fileManager.GetBaseDirectoryXmlCreatedPath();
 
+            // Collect all directories from both base paths
+            IEnumerable<string> directories = Directory.GetDirectories(localBaseDirectoryPath, "*", SearchOption.AllDirectories)
+                .Concat(new[] { localBaseDirectoryXmlCreatedPath }); // Add XML_created path without subdirectories
+
+
+            bool fileExists = false;
             foreach (string dir in directories)
             {
                 var xmlFiles = Directory.GetFiles(dir, "*.xml");
-                if (dir.EndsWith("headers")) continue;  // Skip the headers directory
+                if (xmlFiles.Contains(filePath))
+                {
+                    fileExists = true;
+                    break;
+                }
+            }
+
+            if (!fileExists)
+            {
+                throw new FileNotFoundException($"File '{filePath}' not found in expected directories.");
             }
 
             var type = Type.GetType(typeName);
@@ -112,7 +127,7 @@ namespace FileManagementService.Services
             }
         }
 
-        public List<int> ExtractPurchaseOrderIdsFromXml(string filePath)
+        public List<int> ExtractPurchaseOrderIdFromXml(string filePath)
         {
             try
             {
@@ -125,7 +140,7 @@ namespace FileManagementService.Services
             }
         }
 
-        public List<int> ExtractPurchaseOrderDetailIdsFromXml(string filePath)
+        public List<int> ExtractPurchaseOrderDetailIdFromXml(string filePath)
         {
             try
             {

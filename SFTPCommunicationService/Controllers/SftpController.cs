@@ -25,16 +25,17 @@ namespace SFTPCommunicationService.Controllers
         }
 
         [HttpPost("upload-file")]
-        public IActionResult UploadFile([FromQuery] string localFilePath, [FromQuery] string remoteDirectory)
+        public async Task<IActionResult> UploadFile([FromBody] FileUploadRequestDto request)
         {
-            _fileHandler.UploadFileAsync(localFilePath, remoteDirectory);
+            await _fileHandler.UploadFileAsync(request.LocalFilePath, request.RemotePath);
             return Ok("File uploaded successfully.");
         }
+
 
         [HttpPost("download-file")]
         public async Task<IActionResult> DownloadFile([FromBody] FileDownloadRequestDto request)
         {
-            await _fileHandler.DownloadFile(request.RemoteFilePath, request.LocalDirectory);
+            await _fileHandler.DownloadFileAsync(request.RemoteFilePath, request.LocalDirectory);
             return Ok("File downloaded successfully.");
         }
     }

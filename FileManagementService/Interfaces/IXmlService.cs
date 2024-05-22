@@ -8,7 +8,7 @@ namespace FileManagementService.Interfaces
     {
         object LoadFromXml(string filePath, string typeName);
         void GenerateXMLFiles(List<PurchaseOrderSummary> summaries, DateTime? startDate = null, DateTime? endDate = null);
-        List<int> ExtractPurchaseOrderIdsFromXml(string filePath);
-        List<int> ExtractPurchaseOrderDetailIdsFromXml(string filePath);
+        List<int> ExtractPurchaseOrderIdFromXml(string filePath);
+        List<int> ExtractPurchaseOrderDetailIdFromXml(string filePath);
     }
 }

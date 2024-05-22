@@ -51,7 +51,7 @@ namespace SFTPCommunicationService.Services
             }
         }
 
-        public async Task<bool> DownloadFile(string remoteFilePath, string localDirectory)
+        public async Task<bool> DownloadFileAsync(string remoteFilePath, string localDirectory)
         {
             bool newFilesDownloaded = false;
 
@@ -78,7 +78,7 @@ namespace SFTPCommunicationService.Services
                                 Directory.CreateDirectory(localSubDirectoryPath);
                             }
 
-                            newFilesDownloaded |=  await DownloadFile(subDirectoryPath, localSubDirectoryPath);
+                            newFilesDownloaded |=  await DownloadFileAsync(subDirectoryPath, localSubDirectoryPath);
                         }
                         else if (!entry.IsDirectory && !entry.Name.EndsWith(".processed"))
                         {

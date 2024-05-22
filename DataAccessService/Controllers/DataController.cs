@@ -77,7 +77,7 @@ namespace DataAccessService.Controllers
             return await _dataService.FetchAlreadySentPurchaseOrderIdsAsync();
         }
 
-        [HttpGet("update-po-status")]
+        [HttpPut("update-po-status/{purchaseOrderId}/{purchaseOrderDetailId}/{processed}/{sent}/{channel}")]
         public async Task<bool> UpdatePurchaseOrderStatus(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel)
         {
             return await _dataService.UpdatePurchaseOrderStatusAsync(purchaseOrderId, purchaseOrderDetailId, processed, sent, channel);

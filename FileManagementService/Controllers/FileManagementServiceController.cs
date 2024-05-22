@@ -45,12 +45,12 @@ namespace FileManagementService.Controllers
             }
         }
 
-        [HttpGet("extract-purchase-order-ids")]
-        public ActionResult<List<int>> ExtractPurchaseOrderIdsFromXml(string filePath)
+        [HttpGet("extract-purchase-order-id")]
+        public ActionResult<List<int>> ExtractPurchaseOrderIdFromXml(string filePath)
         {
             try
             {
-                var ids = _xmlService.ExtractPurchaseOrderIdsFromXml(filePath);
+                var ids = _xmlService.ExtractPurchaseOrderIdFromXml(filePath);
                 return Ok(ids);
             }
             catch (Exception ex)
@@ -59,12 +59,12 @@ namespace FileManagementService.Controllers
             }
         }
 
-        [HttpGet("extract-purchase-order-detail-ids")]
-        public ActionResult<List<int>> ExtractPurchaseOrderDetailIdsFromXml(string filePath)
+        [HttpGet("extract-purchase-order-detail-id")]
+        public ActionResult<List<int>> ExtractPurchaseOrderDetailIdFromXml(string filePath)
         {
             try
             {
-                var ids = _xmlService.ExtractPurchaseOrderDetailIdsFromXml(filePath);
+                var ids = _xmlService.ExtractPurchaseOrderDetailIdFromXml(filePath);
                 return Ok(ids);
             }
             catch (Exception ex)

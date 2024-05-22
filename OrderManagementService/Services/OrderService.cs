@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
@@ -168,13 +169,26 @@ namespace OrderManagementService.Services
 
             if(responseSummaries.IsSuccessStatusCode)
             {
-                var result = await responseSummaries.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
+                var resultSummaries = await responseSummaries.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
 
-                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", result);
+                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", resultSummaries);
 
                 if (responseResult.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("XML generated successfully!");
+                    // Loop through the summaries and create/upload the corresponding XML files
+                    foreach (var summary in resultSummaries)
+                    {
+                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{summary.PurchaseOrderDetailID}/{true}/{false}/{0}", null); // Mark as processed, not sent, base channel
+                        if (responseUpdateStatus.IsSuccessStatusCode)
+                        {
+                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} created");
+                        }
+                        else
+                        {
+                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} failed to create");
+                        }
+                    }
+                    //_logger.LogInformation("XML generated successfully!");
                     return true;
                 }
                 else
@@ -183,17 +197,15 @@ namespace OrderManagementService.Services
                     return false;
                 }
             }
-
             return false;
-
-
         }
 
         public async Task<bool> SendXmlAsync()
         {
             try
             {
-                string localBaseDirectoryPath = await GetPathAsync("baseDirectoryPath");
+                // _baseDirectoryXmlCreatedPath
+                string baseDirectoryXmlCreatedPath = await GetPathAsync("baseDirectoryXmlCreatedPath");
                 string remoteDirectoryPath = await GetPathAsync("remoteDirectoryPath");
                 var alreadySentIds = new HashSet<int>();
                 DateTime? latestDate = null;
@@ -215,7 +227,7 @@ namespace OrderManagementService.Services
                     foreach (var orderId in resultGeneratedIds)
                     {
                         string fileName = $"PurchaseOrderGenerated_{orderId}.xml";
-                        string filePath = Path.Combine(localBaseDirectoryPath, fileName);
+                        string filePath = Path.Combine(baseDirectoryXmlCreatedPath, fileName);
 
                         if (!File.Exists(filePath))
                         {
@@ -223,7 +235,9 @@ namespace OrderManagementService.Services
                             continue;
                         }
 
-                        var responseOrderIdsFromXml = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/extract-purchase-order-ids", filePath);
+                        //var responseOrderIdsFromXml = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/extract-purchase-order-ids", filePath);
+                        var responseOrderIdsFromXml = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-id?filePath={Uri.EscapeDataString(filePath)}");
+
 
                         if (responseOrderIdsFromXml.IsSuccessStatusCode)
                         {
@@ -251,7 +265,8 @@ namespace OrderManagementService.Services
                                 }
 
                                 // Update the status of the purchase order (have to update the status of each detail)
-                                var responseDetailIds = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/extract-purchase-order-detail-ids", filePath);
+                                //var responseDetailIds = await _fileManagementServiceClient.GetAsJsonAsync("api/FileManagementService/extract-purchase-order-detail-id", filePath);
+                                var responseDetailIds = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-detail-id?filePath={Uri.EscapeDataString(filePath)}");
 
                                 if (responseDetailIds.IsSuccessStatusCode)
                                 {
@@ -259,10 +274,11 @@ namespace OrderManagementService.Services
 
                                     foreach (var detailsId in resultDetailIds)
                                     {
-                                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-status/{id}/{detailsId}/{true}/{true}/{0}", null);
+                                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{id}/{detailsId}/{true}/{true}/{0}", null);
 
                                         if (responseUpdateStatus.IsSuccessStatusCode)
                                         {
+                                            Log.Information($"PurchaseOrderId: {id} with PurchaseOrderDetailId: {detailsId} sent");
                                             Log.Information($"PurchaseOrderDetailId sent: {detailsId}");
                                         }
                                         else
