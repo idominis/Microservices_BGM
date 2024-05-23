@@ -163,42 +163,72 @@ namespace OrderManagementService.Services
             }
         }
 
-        public async Task<bool> GenerateXmlAsync()
+        public async Task<bool> GenerateXmlAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            var responseSummaries = await _dataAccessServiceClient.GetAsync("api/data/fetch-summaries");
+            var responseAlreadyGeneratedSummaries = await _dataAccessServiceClient.GetAsync("api/data/fetch-generated");
 
-            if(responseSummaries.IsSuccessStatusCode)
+            if (!responseAlreadyGeneratedSummaries.IsSuccessStatusCode)
             {
-                var resultSummaries = await responseSummaries.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
-
-                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", resultSummaries);
-
-                if (responseResult.IsSuccessStatusCode)
-                {
-                    // Loop through the summaries and create/upload the corresponding XML files
-                    foreach (var summary in resultSummaries)
-                    {
-                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{summary.PurchaseOrderDetailID}/{true}/{false}/{0}", null); // Mark as processed, not sent, base channel
-                        if (responseUpdateStatus.IsSuccessStatusCode)
-                        {
-                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} created");
-                        }
-                        else
-                        {
-                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} failed to create");
-                        }
-                    }
-                    //_logger.LogInformation("XML generated successfully!");
-                    return true;
-                }
-                else
-                {
-                    _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", responseResult.StatusCode);
-                    return false;
-                }
+                // Handle the error
+                var error = await responseAlreadyGeneratedSummaries.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to fetch generated summaries: {error}");
             }
-            return false;
+
+            var resultAlreadyGeneratedSummaries = await responseAlreadyGeneratedSummaries.Content.ReadFromJsonAsync<HashSet<int>>();
+
+            var fetchSummariesRequest = new FetchSummariesRequestDto
+            {
+                AlreadyGeneratedIds = resultAlreadyGeneratedSummaries,
+                StartDate = startDate,
+                EndDate = endDate
+            };
+
+            var responseSummariesToGenerate = await _dataAccessServiceClient.PostAsJsonAsync("api/data/fetch-summaries-to-generate", fetchSummariesRequest);
+
+            if (!responseSummariesToGenerate.IsSuccessStatusCode)
+            {
+                // Handle the error
+                var error = await responseSummariesToGenerate.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to fetch summaries to generate: {error}");
+            }
+
+            var summariesToGenerate = await responseSummariesToGenerate.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
+
+            // Proceed with generating XML for summariesToGenerate
+            if (summariesToGenerate == null || summariesToGenerate.Count == 0)
+            {
+                Log.Information("No summaries to generate XML for.");
+                return true;
+            }
+
+            var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", summariesToGenerate);
+
+            if (responseResult.IsSuccessStatusCode)
+            {
+                // Loop through the summaries and create/upload the corresponding XML files
+                foreach (var summary in summariesToGenerate)
+                {
+                    var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{summary.PurchaseOrderDetailID}/{true}/{false}/{0}", null); // Mark as processed, not sent, base channel
+                    if (responseUpdateStatus.IsSuccessStatusCode)
+                    {
+                        Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} created");
+                    }
+                    else
+                    {
+                        Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} failed to create");
+                    }
+                }
+
+                _logger.LogInformation("XML generated successfully!");
+                return true;
+            }
+            else
+            {
+                _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", responseResult.StatusCode);
+                return false;
+            }
         }
+
 
         public async Task<bool> SendXmlAsync()
         {

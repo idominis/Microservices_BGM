@@ -12,7 +12,8 @@ namespace OrderManagementService.Services
         Task<bool> DownloadFilesPOHAsync();
         Task<bool> SavePODetailsAsync(List<PurchaseOrderDetailDto> purchaseOrderDetailsDto);
         Task<bool> SavePOHeadersAsync(List<PurchaseOrderHeaderDto> purchaseOrderHeadersDto);
-        Task<bool> GenerateXmlAsync();
+        //Task<bool> GenerateXmlAsync();
+        Task<bool> GenerateXmlAsync(DateTime? startDate = null, DateTime? endDate = null);
         Task<bool> SendXmlAsync();
         Task<bool> SendDateGeneratedXmlAsync(DateTime startDate, DateTime endDate);
         Task<List<PurchaseOrderDetailDto>> FetchPODetailsAsync();

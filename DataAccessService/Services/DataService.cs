@@ -124,6 +124,41 @@ namespace DataAccessService.Services
             return _mapper.Map<List<PurchaseOrderSummary>>(viewData);
         }
 
+        public async Task<List<VPurchaseOrderSummary>> FetchSummariesToGenerateAsync(HashSet<int> alreadyGeneratedIds, DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var query = _context.VPurchaseOrderSummaries.AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(s => s.OrderDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(s => s.OrderDate <= endDate.Value);
+                }
+
+                if (alreadyGeneratedIds != null && alreadyGeneratedIds.Count > 0)
+                {
+                    query = query.Where(s => !alreadyGeneratedIds.Contains(s.PurchaseOrderId));
+                }
+
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Log.Error(ex, "An error occurred while fetching purchase order summaries to generate.");
+                return new List<VPurchaseOrderSummary>();
+            }
+        }
+
+
+
+
+
         public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIdsAsync()
         {
             return new HashSet<int>(await _context.PurchaseOrdersProcessedSents

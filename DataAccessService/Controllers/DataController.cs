@@ -71,6 +71,13 @@ namespace DataAccessService.Controllers
             return await _dataService.FetchPurchaseOrderSummariesByDateAsync(dateRange.StartDate, dateRange.EndDate);
         }
 
+        [HttpPost("fetch-summaries-to-generate")]
+        public async Task<ActionResult<List<PurchaseOrderSummary>>> FetchSummariesToGenerate([FromBody] FetchSummariesRequestDto request)
+        {
+            var summaries = await _dataService.FetchSummariesToGenerateAsync(request.AlreadyGeneratedIds, request.StartDate, request.EndDate);
+            return Ok(summaries);
+        }
+
 
         [HttpGet("fetch-generated")]
         public async Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIds()
@@ -84,7 +91,7 @@ namespace DataAccessService.Controllers
             return await _dataService.FetchAlreadySentPurchaseOrderIdsAsync();
         }
 
-        [HttpPut("update-po-status/{purchaseOrderId}/{purchaseOrderDetailId}/{processed}/{sent}/{channel}")]
+        [HttpPut("update-po-status/{purchaseOrderId}/{purchaseOrderDetailId}/{processed}/{sent}/{channel}")] //TODO
         public async Task<bool> UpdatePurchaseOrderStatus(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel)
         {
             return await _dataService.UpdatePurchaseOrderStatusAsync(purchaseOrderId, purchaseOrderDetailId, processed, sent, channel);

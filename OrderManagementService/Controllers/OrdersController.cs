@@ -122,6 +122,23 @@ namespace OrderManagementService.Controllers
             }
         }
 
+        [HttpPost("generate-xml-date")]
+        public async Task<IActionResult> GenerateDateXml(DateTime? startDate = null, DateTime? endDate = null)  // GenerateXMLFiles in FileManagementService with date parameters
+        {
+            //DateTime startDate = DateTime.Today;
+            //DateTime endDate = DateTime.Today.AddDays(1);
+
+            var result = await _orderService.GenerateXmlAsync(startDate, endDate);
+            if (result)
+            {
+                return Ok("XML by date generated successfully!");
+            }
+            else
+            {
+                return StatusCode(500, "Failed to generate XML by date.");
+            }
+        }
+
         [HttpPost("send-xml")]
         public async Task<IActionResult> SendXml()
         {

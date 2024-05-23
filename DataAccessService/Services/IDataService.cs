@@ -11,6 +11,7 @@ namespace DataAccessService.Services
         Task<string> SavePOHToDbAsync(List<PurchaseOrderHeaderDto> podHeaders);
         Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummariesAsync();
         Task<List<PurchaseOrderSummary>> FetchPurchaseOrderSummariesByDateAsync(DateTime startDate, DateTime endDate);
+        Task<List<VPurchaseOrderSummary>> FetchSummariesToGenerateAsync(HashSet<int> alreadyGeneratedIds, DateTime? startDate, DateTime? endDate);
         Task<HashSet<int>> FetchAlreadyGeneratedPurchaseOrderIdsAsync();
         Task<HashSet<int>> FetchAlreadySentPurchaseOrderIdsAsync();
         Task<bool> UpdatePurchaseOrderStatusAsync(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel);
