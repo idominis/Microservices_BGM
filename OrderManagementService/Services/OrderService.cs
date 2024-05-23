@@ -234,104 +234,98 @@ namespace OrderManagementService.Services
         {
             try
             {
-                // _baseDirectoryXmlCreatedPath
                 string baseDirectoryXmlCreatedPath = await GetPathAsync("baseDirectoryXmlCreatedPath");
                 string remoteDirectoryPath = await GetPathAsync("remoteDirectoryPath");
                 var alreadySentIds = new HashSet<int>();
                 DateTime? latestDate = null;
 
                 var responseAlreadySent = await _dataAccessServiceClient.GetAsync("api/data/fetch-sent");
-
-                if (responseAlreadySent.IsSuccessStatusCode)
+                if (!responseAlreadySent.IsSuccessStatusCode)
                 {
-                    var resultAlreadySent = await responseAlreadySent.Content.ReadFromJsonAsync<HashSet<int>>();
-                    alreadySentIds = resultAlreadySent;
+                    Log.Error($"Failed to fetch already sent IDs: {responseAlreadySent.StatusCode}");
+                    return false;
                 }
 
+                alreadySentIds = await responseAlreadySent.Content.ReadFromJsonAsync<HashSet<int>>();
+
                 var responseGenerated = await _dataAccessServiceClient.GetAsync("api/data/fetch-generated");
-
-                if (responseGenerated.IsSuccessStatusCode)
+                if (!responseGenerated.IsSuccessStatusCode)
                 {
-                    var resultGeneratedIds = await responseGenerated.Content.ReadFromJsonAsync<HashSet<int>>();
+                    Log.Error($"Failed to fetch generated IDs: {responseGenerated.StatusCode}");
+                    return false;
+                }
 
-                    foreach (var orderId in resultGeneratedIds)
+                var resultGeneratedIds = await responseGenerated.Content.ReadFromJsonAsync<HashSet<int>>();
+
+                foreach (var orderId in resultGeneratedIds)
+                {
+                    string fileName = $"PurchaseOrderGenerated_{orderId}.xml";
+                    string filePath = Path.Combine(baseDirectoryXmlCreatedPath, fileName);
+
+                    if (!File.Exists(filePath))
                     {
-                        string fileName = $"PurchaseOrderGenerated_{orderId}.xml";
-                        string filePath = Path.Combine(baseDirectoryXmlCreatedPath, fileName);
+                        Log.Warning($"File not found: {filePath}");
+                        continue;
+                    }
 
-                        if (!File.Exists(filePath))
+                    var responseOrderIdsFromXml = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-id?filePath={Uri.EscapeDataString(filePath)}");
+                    if (!responseOrderIdsFromXml.IsSuccessStatusCode)
+                    {
+                        Log.Error($"Failed to extract purchase order IDs from: {filePath}");
+                        continue;
+                    }
+
+                    var resultOrderIdsFromXml = await responseOrderIdsFromXml.Content.ReadFromJsonAsync<List<int>>();
+
+                    foreach (var id in resultOrderIdsFromXml)
+                    {
+                        if (alreadySentIds.Contains(id))
                         {
-                            Log.Warning($"File not found: {filePath}");
+                            Log.Information($"PurchaseOrderId already sent: {id}");
                             continue;
                         }
 
-                        //var responseOrderIdsFromXml = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/extract-purchase-order-ids", filePath);
-                        var responseOrderIdsFromXml = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-id?filePath={Uri.EscapeDataString(filePath)}");
+                        string remoteFilePath = Path.Combine(remoteDirectoryPath, fileName);
+                        var responseUpload = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/upload-file", new FileUploadRequestDto { LocalFilePath = filePath, RemotePath = remoteFilePath });
 
-
-                        if (responseOrderIdsFromXml.IsSuccessStatusCode)
+                        if (!responseUpload.IsSuccessStatusCode)
                         {
-                            var resultOrderIdsFromXml = await responseOrderIdsFromXml.Content.ReadFromJsonAsync<List<int>>();
+                            Log.Error($"Failed to upload file: {filePath}");
+                            continue; // Move to the next file if upload fails
+                        }
 
-                            foreach (var id in resultOrderIdsFromXml)
+                        Log.Information($"File uploaded successfully: {filePath}");
+
+                        var responseDetailIds = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-detail-id?filePath={Uri.EscapeDataString(filePath)}");
+                        if (!responseDetailIds.IsSuccessStatusCode)
+                        {
+                            Log.Error($"Failed to extract purchase order detail IDs from: {filePath}");
+                            continue;
+                        }
+
+                        var resultDetailIds = await responseDetailIds.Content.ReadFromJsonAsync<List<int>>();
+
+                        foreach (var detailsId in resultDetailIds)
+                        {
+                            var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{id}/{detailsId}/{true}/{true}/{0}", null);
+                            if (responseUpdateStatus.IsSuccessStatusCode)
                             {
-                                if (alreadySentIds.Contains(id))
-                                {
-                                    Log.Information($"PurchaseOrderId already sent: {id}");
-                                    continue;
-                                }
+                                Log.Information($"PurchaseOrderId: {id} with PurchaseOrderDetailId: {detailsId} sent");
+                            }
+                            else
+                            {
+                                Log.Error($"Failed to update status for PurchaseOrderDetailId: {detailsId}");
+                            }
+                        }
 
-                                string remoteFilePath = Path.Combine(remoteDirectoryPath, fileName);
-                                var responseUpload = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/upload-file", new FileUploadRequestDto { LocalFilePath = filePath, RemotePath = remoteFilePath });
-
-                                if (responseUpload.IsSuccessStatusCode)
-                                {
-                                    Log.Information($"File uploaded successfully: {filePath}");
-                                }
-                                else
-                                {
-                                    Log.Error($"Failed to upload file: {filePath}");
-                                    return false; // Exit on upload failure
-                                }
-
-                                // Update the status of the purchase order (have to update the status of each detail)
-                                //var responseDetailIds = await _fileManagementServiceClient.GetAsJsonAsync("api/FileManagementService/extract-purchase-order-detail-id", filePath);
-                                var responseDetailIds = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-detail-id?filePath={Uri.EscapeDataString(filePath)}");
-
-                                if (responseDetailIds.IsSuccessStatusCode)
-                                {
-                                    var resultDetailIds = await responseDetailIds.Content.ReadFromJsonAsync<List<int>>();
-
-                                    foreach (var detailsId in resultDetailIds)
-                                    {
-                                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{id}/{detailsId}/{true}/{true}/{0}", null);
-
-                                        if (responseUpdateStatus.IsSuccessStatusCode)
-                                        {
-                                            Log.Information($"PurchaseOrderId: {id} with PurchaseOrderDetailId: {detailsId} sent");
-                                            Log.Information($"PurchaseOrderDetailId sent: {detailsId}");
-                                        }
-                                        else
-                                        {
-                                            Log.Error($"Failed to update status for PurchaseOrderDetailId: {detailsId}");
-                                        }
-                                    }
-                                }
-
-                                //TODO
-                                var responseFileDate = await _dataAccessServiceClient.GetAsync($"api/data/get-po-latest-date/{orderId}");
-
-                                if (responseFileDate.IsSuccessStatusCode)
-                                {
-                                    var resultFileDate = await responseFileDate.Content.ReadFromJsonAsync<DateTime?>();
-
-                                    if (resultFileDate.HasValue && (latestDate == null || resultFileDate > latestDate))
-                                    {
-                                        latestDate = resultFileDate;
-                                        LatestDateUpdated?.Invoke(resultFileDate.Value);
-                                    }
-                                }
-
+                        var responseFileDate = await _dataAccessServiceClient.GetAsync($"api/data/get-po-latest-date/{orderId}");
+                        if (responseFileDate.IsSuccessStatusCode)
+                        {
+                            var resultFileDate = await responseFileDate.Content.ReadFromJsonAsync<DateTime?>();
+                            if (resultFileDate.HasValue && (latestDate == null || resultFileDate > latestDate))
+                            {
+                                latestDate = resultFileDate;
+                                LatestDateUpdated?.Invoke(resultFileDate.Value);
                             }
                         }
                     }
@@ -350,6 +344,7 @@ namespace OrderManagementService.Services
                 return false;
             }
         }
+
 
         public async Task<bool> SendDateGeneratedXmlAsync(DateTime startDate, DateTime endDate)
         {
