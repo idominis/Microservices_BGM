@@ -7,85 +7,128 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 </head>
 <body>
-    <h2>Main Form</h2>
+    <div class="container mt-4">
+        <h2>Main Form</h2>
 
-    <form id="mainForm" method="post">
-        <div>
-            <button type="button" id="serviceStartButton" class="btn btn-primary">Service Start</button>
-            <button type="button" id="serviceStopButton" class="btn btn-secondary">Service Stop</button>
-        </div>
-
-        <div>
-            <button type="button" id="savePODToDbButton" class="btn btn-success">Save POD to DB</button>
-            <button type="button" id="savePOHToDbButton" class="btn btn-success">Save POH to DB</button>
-        </div>
-
-        <div>
-            <label for="comboBoxStartDate">Start Date:</label>
-            <select id="comboBoxStartDate" class="form-control">
-                <!-- Options can be dynamically populated -->
-                <option value="2021-01-01">2021-01-01</option>
-                <option value="2021-02-01">2021-02-01</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="comboBoxEndDate">End Date:</label>
-            <select id="comboBoxEndDate" class="form-control">
-                <!-- Options can be dynamically populated -->
-                <option value="2021-03-01">2021-03-01</option>
-                <option value="2021-04-01">2021-04-01</option>
-            </select>
-        </div>
-
-        <div>
-            <button type="button" id="generateXmlButton" class="btn btn-info">Generate XML</button>
-            <button type="button" id="sendXmlButton" class="btn btn-warning">Send XML</button>
-        </div>
-
-        <div>
-            <label for="autoSendTextBox">Last Date Sent:</label>
-            <input type="text" id="autoSendTextBox" class="form-control" readonly />
-        </div>
-
-        <div>
-            <label>Auto Send:</label>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOn" value="on">
-                <label class="form-check-label" for="radioButtonOn">On</label>
+        <form id="mainForm" method="post">
+            <div class="mb-3">
+                <button type="button" id="serviceStartButton" class="btn btn-primary">Service Start</button>
+                <button type="button" id="serviceStopButton" class="btn btn-secondary">Service Stop</button>
+                <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOff" value="off">
-                <label class="form-check-label" for="radioButtonOff">Off</label>
+
+            <fieldset class="border p-2 mb-3">
+                <legend class="w-auto">Save PurchaseOrders to Db</legend>
+                <div class="form-group">
+                    <button type="button" id="savePODToDbButton" class="btn btn-success">Save POD to DB</button>
+                    <button type="button" id="savePOHToDbButton" class="btn btn-success">Save POH to DB</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Auto Save:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOn" value="on">
+                        <label class="form-check-label" for="radioButtonOn">On</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOff" value="off">
+                        <label class="form-check-label" for="radioButtonOff">Off</label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="border p-2 mb-3">
+                <legend class="w-auto">Generate and Send XML</legend>
+                <div class="form-row mb-3">
+                    <div class="col-md-6">
+                        <label for="comboBoxStartDate">Start Date:</label>
+                        <select id="comboBoxStartDate" class="form-control">
+                            <!-- Options can be dynamically populated -->
+                            <option value="2021-01-01">2021-01-01</option>
+                            <option value="2021-02-01">2021-02-01</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="comboBoxEndDate">End Date:</label>
+                        <select id="comboBoxEndDate" class="form-control">
+                            <!-- Options can be dynamically populated -->
+                            <option value="2021-03-01">2021-03-01</option>
+                            <option value="2021-04-01">2021-04-01</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="button" id="generateXmlButton" class="btn btn-info">Generate XML</button>
+                    <button type="button" id="sendXmlButton" class="btn btn-warning">Send XML</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Auto Generate and Send:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioButtonAutoGenerateOn" value="on">
+                        <label class="form-check-label" for="radioButtonAutoGenerateOn">On</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioButtonAutoGenerateOff" value="off">
+                        <label class="form-check-label" for="radioButtonAutoGenerateOff">Off</label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="form-row mb-3">
+                <div class="col-md-6">
+                    <label for="autoGenerateTextBox">Last Date Generated:</label>
+                    <input type="text" id="autoGenerateTextBox" class="form-control" readonly />
+                </div>
+                <div class="col-md-6">
+                    <label for="autoSendTextBox">Last Date Sent:</label>
+                    <input type="text" id="autoSendTextBox" class="form-control" readonly />
+                </div>
             </div>
-        </div>
 
-        <div>
-            <textarea id="richTextBoxLogs" class="form-control" rows="10" readonly></textarea>
-        </div>
+            <div class="mb-3">
+                <textarea id="richTextBoxLogs" class="form-control" rows="10" readonly></textarea>
+            </div>
 
-        <div>
-            <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
-        </div>
-    </form>
+            
+        </form>
+    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("savePODToDbButton").addEventListener("click", function () {
                 fetch('@Url.Action("SavePODToDb", "Frontend")', {
-                    method: 'POST'
-                }).then(response => response.json())
-                    .then(data => logMessage(data))
-                    .catch(error => logMessage('Error: ' + error));
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                }).then(data => logMessage(data))
+                    .catch(error => logMessage('Error: ' + error.message));
             });
 
             document.getElementById("savePOHToDbButton").addEventListener("click", function () {
                 fetch('@Url.Action("SavePOHToDb", "Frontend")', {
-                    method: 'POST'
-                }).then(response => response.json())
-                    .then(data => logMessage(data))
-                    .catch(error => logMessage('Error: ' + error));
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                }).then(data => logMessage(data))
+                    .catch(error => logMessage('Error: ' + error.message));
             });
+
+            // Add similar event listeners for other buttons if needed
         });
 
         function logMessage(message) {
