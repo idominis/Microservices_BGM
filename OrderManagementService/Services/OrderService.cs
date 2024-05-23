@@ -363,77 +363,90 @@ namespace OrderManagementService.Services
                     StartDate = startDate,
                     EndDate = endDate
                 };
+
                 // Retrieve all purchase order summaries within the specified date range
                 var responseSummariesByDate = await _dataAccessServiceClient.PostAsJsonAsync("api/data/fetch-summaries-date", dateRange);
-
-                if (responseSummariesByDate.IsSuccessStatusCode)
+                if (!responseSummariesByDate.IsSuccessStatusCode)
                 {
-                    var purchaseOrderSummariesByDate = await responseSummariesByDate.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
+                    Log.Error($"Failed to fetch summaries by date: {responseSummariesByDate.StatusCode}");
+                    return false;
+                }
 
-                    var responseAlreadySentIds = await _dataAccessServiceClient.GetAsync("api/data/fetch-sent");
+                var purchaseOrderSummariesByDate = await responseSummariesByDate.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
 
-                    if (responseAlreadySentIds.IsSuccessStatusCode)
+                var responseAlreadySentIds = await _dataAccessServiceClient.GetAsync("api/data/fetch-sent");
+                if (!responseAlreadySentIds.IsSuccessStatusCode)
+                {
+                    Log.Error($"Failed to fetch already sent IDs: {responseAlreadySentIds.StatusCode}");
+                    return false;
+                }
+
+                var alreadySentIds = await responseAlreadySentIds.Content.ReadFromJsonAsync<HashSet<int>>();
+
+                // Filter out already sent purchase orders to get only those that need to be uploaded
+                List<PurchaseOrderSummaryDto> idsToUpload = purchaseOrderSummariesByDate
+                    .Where(summary => !alreadySentIds.Contains(summary.PurchaseOrderID))
+                    .ToList();
+
+                if (!idsToUpload.Any())
+                {
+                    Log.Error("All Purchase Orders in the specified date range have already been sent.");
+                    return false;
+                }
+
+                // Generate the XML files for the filtered summaries
+                var responseIdsToUpload = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", idsToUpload);
+                if (!responseIdsToUpload.IsSuccessStatusCode)
+                {
+                    Log.Error($"Failed to generate XML files: {responseIdsToUpload.StatusCode}");
+                    return false;
+                }
+
+                // Loop through the summaries and create/upload the corresponding XML files
+                foreach (var summary in idsToUpload)
+                {
+                    // Create the file name dynamically using the PurchaseOrderID
+                    string fileName = $"PurchaseOrderGenerated_{summary.PurchaseOrderID}.xml";
+                    string filePath = Path.Combine(baseDirectoryXmlCreatedPath, fileName);
+
+                    // Determine the remote directory path where the file will be uploaded
+                    string remoteDirectoryPath = await GetPathAsync("remoteDirectoryPath");
+                    string remotePath = Path.Combine(remoteDirectoryPath, fileName);
+
+                    // Upload the file to the remote path
+                    var responseUpload = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/upload-file", new FileUploadRequestDto { LocalFilePath = filePath, RemotePath = remotePath });
+                    if (!responseUpload.IsSuccessStatusCode)
                     {
-                        var alreadySentIds = await responseAlreadySentIds.Content.ReadFromJsonAsync<HashSet<int>>();
+                        Log.Error($"Failed to upload file: {filePath}");
+                        continue;
+                    }
 
-                        // Filter out already sent purchase orders to get only those that need to be uploaded
-                        List<PurchaseOrderSummaryDto> idsToUpload = purchaseOrderSummariesByDate
-                            .Where(summary => !alreadySentIds.Contains(summary.PurchaseOrderID))
-                            .ToList();
+                    // Extract the detail IDs from the generated XML file & Update the database with the upload status for each detail
+                    var responseDetailIds = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-detail-id?filePath={Uri.EscapeDataString(filePath)}");
+                    if (!responseDetailIds.IsSuccessStatusCode)
+                    {
+                        Log.Error($"Failed to extract purchase order detail IDs from: {filePath}");
+                        continue;
+                    }
 
-                        if (!idsToUpload.Any())
+                    var resultDetailIds = await responseDetailIds.Content.ReadFromJsonAsync<List<int>>();
+
+                    foreach (var detailsId in resultDetailIds)
+                    {
+                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{detailsId}/{true}/{true}/{0}", null);
+                        if (responseUpdateStatus.IsSuccessStatusCode)
                         {
-                            Log.Error("All Purchase Orders in the specified date range have already been sent.");
-                            return false;
+                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {detailsId} sent");
+                            Log.Information($"PurchaseOrderDetailId sent: {detailsId}");
                         }
-                        // Generate the XML files for the filtered summaries
-                        var responseIdsToUpload = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", idsToUpload);
-                        if (responseIdsToUpload.IsSuccessStatusCode)
+                        else
                         {
-                            //var resultIdsToUpload = await responseIdsToUpload.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>(); // samo su generirani nema ih u contentu
-
-                            // Loop through the summaries and create/upload the corresponding XML files
-                            foreach (var summary in idsToUpload)
-                            {
-                                // Create the file name dynamically using the PurchaseOrderID
-                                string fileName = $"PurchaseOrderGenerated_{summary.PurchaseOrderID}.xml";
-                                string filePath = Path.Combine(baseDirectoryXmlCreatedPath, fileName);
-
-                                // Determine the remote directory path where the file will be uploaded  RemoteDirectoryPath
-                                string remoteDirectoryPath = await GetPathAsync("remoteDirectoryPath");  //"/Uploaded/";
-                                string remotePath = Path.Combine(remoteDirectoryPath, fileName);
-
-                                // Upload the file to the remote path
-                                var responseUpload = await _sftpCommunicationServiceClient.PostAsJsonAsync("api/SFTP/upload-file", new FileUploadRequestDto { LocalFilePath = filePath, RemotePath = remotePath });
-
-                                // Extract the detail IDs from the generated XML file & Update the database with the upload status for each detail
-                                var responseDetailIds = await _fileManagementServiceClient.GetAsync($"api/FileManagementService/extract-purchase-order-detail-id?filePath={Uri.EscapeDataString(filePath)}");
-
-                                if (responseDetailIds.IsSuccessStatusCode)
-                                {
-                                    var resultDetailIds = await responseDetailIds.Content.ReadFromJsonAsync<List<int>>();
-
-                                    foreach (var detailsId in resultDetailIds)
-                                    {
-                                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{detailsId}/{true}/{true}/{0}", null);
-
-                                        if (responseUpdateStatus.IsSuccessStatusCode)
-                                        {
-                                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {detailsId} sent");
-                                            Log.Information($"PurchaseOrderDetailId sent: {detailsId}");
-                                        }
-                                        else
-                                        {
-                                            Log.Error($"Failed to update status for PurchaseOrderDetailId: {detailsId}");
-                                        }
-                                    }
-                                }
-                            }
-                            return true;
+                            Log.Error($"Failed to update status for PurchaseOrderDetailId: {detailsId}");
                         }
                     }
                 }
-                return false;
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -441,7 +454,6 @@ namespace OrderManagementService.Services
                 return false;
             }
         }
-
 
         public async Task<List<PurchaseOrderDetailDto>> FetchPODetailsAsync()
         {
