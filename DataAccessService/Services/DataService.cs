@@ -228,7 +228,6 @@ namespace DataAccessService.Services
                                               .Where(x => x.PurchaseOrderId == purchaseOrderId)
                                               .Select(x => x.OrderDate)
                                               .FirstOrDefaultAsync();
-
             return latestDate;
         }
 

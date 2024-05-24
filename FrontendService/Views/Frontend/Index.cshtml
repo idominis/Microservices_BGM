@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Form</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
 </head>
 <body>
     <div class="container mt-4">
@@ -14,11 +15,10 @@
             <div class="mb-3">
                 <button type="button" id="serviceStartButton" class="btn btn-primary">Service Start</button>
                 <button type="button" id="serviceStopButton" class="btn btn-secondary">Service Stop</button>
-                <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
             </div>
 
             <fieldset class="border p-2 mb-3">
-                <legend class="w-auto">Save PurchaseOrders to Db</legend>
+                <legend class="w-auto">Auto</legend>
                 <div class="form-group">
                     <button type="button" id="savePODToDbButton" class="btn btn-success">Save POD to DB</button>
                     <button type="button" id="savePOHToDbButton" class="btn btn-success">Save POH to DB</button>
@@ -27,36 +27,32 @@
                 <div class="form-group">
                     <label>Auto Save:</label>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOn" value="on">
+                        <input class="form-check-input" type="radio" name="autoSaveRadio" id="radioButtonOn" value="on">
                         <label class="form-check-label" for="radioButtonOn">On</label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="autoSendRadio" id="radioButtonOff" value="off">
+                        <input class="form-check-input" type="radio" name="autoSaveRadio" id="radioButtonOff" value="off">
                         <label class="form-check-label" for="radioButtonOff">Off</label>
                     </div>
                 </div>
             </fieldset>
 
             <fieldset class="border p-2 mb-3">
-                <legend class="w-auto">Generate and Send XML</legend>
-                <div class="form-row mb-3">
-                    <div class="col-md-6">
-                        <label for="comboBoxStartDate">Start Date:</label>
-                        <select id="comboBoxStartDate" class="form-control">
-                            <!-- Options can be dynamically populated -->
-                            <option value="2021-01-01">2021-01-01</option>
-                            <option value="2021-02-01">2021-02-01</option>
-                        </select>
-                    </div>
+                <legend class="w-auto">Generate & Send XML</legend>
+                <div class="form-group">
+                    <label for="comboBoxStartDate">Start Date:</label>
+                    <select id="comboBoxStartDate" class="form-control" style="width: auto; display: inline-block;">
+                        <option value="2021-01-01">2021-01-01</option>
+                        <option value="2021-02-01">2021-02-01</option>
+                    </select>
+                </div>
 
-                    <div class="col-md-6">
-                        <label for="comboBoxEndDate">End Date:</label>
-                        <select id="comboBoxEndDate" class="form-control">
-                            <!-- Options can be dynamically populated -->
-                            <option value="2021-03-01">2021-03-01</option>
-                            <option value="2021-04-01">2021-04-01</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="comboBoxEndDate">End Date:</label>
+                    <select id="comboBoxEndDate" class="form-control" style="width: auto; display: inline-block;">
+                        <option value="2021-03-01">2021-03-01</option>
+                        <option value="2021-04-01">2021-04-01</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -65,77 +61,76 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Auto Generate and Send:</label>
+                    <label>Auto Generate:</label>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioButtonAutoGenerateOn" value="on">
-                        <label class="form-check-label" for="radioButtonAutoGenerateOn">On</label>
+                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioGenerateOn" value="on">
+                        <label class="form-check-label" for="radioGenerateOn">On</label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioButtonAutoGenerateOff" value="off">
-                        <label class="form-check-label" for="radioButtonAutoGenerateOff">Off</label>
+                        <input class="form-check-input" type="radio" name="autoGenerateRadio" id="radioGenerateOff" value="off">
+                        <label class="form-check-label" for="radioGenerateOff">Off</label>
                     </div>
                 </div>
             </fieldset>
 
-            <div class="form-row mb-3">
-                <div class="col-md-6">
-                    <label for="autoGenerateTextBox">Last Date Generated:</label>
-                    <input type="text" id="autoGenerateTextBox" class="form-control" readonly />
-                </div>
+            <div class="row">
                 <div class="col-md-6">
                     <label for="autoSendTextBox">Last Date Sent:</label>
                     <input type="text" id="autoSendTextBox" class="form-control" readonly />
                 </div>
+                <div class="col-md-6">
+                    <label for="lastDateGeneratedTextBox">Last Date Generated:</label>
+                    <input type="text" id="lastDateGeneratedTextBox" class="form-control" readonly />
+                </div>
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <textarea id="richTextBoxLogs" class="form-control" rows="10" readonly></textarea>
             </div>
 
-            
+            <div class="form-group">
+                <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
+            </div>
         </form>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.getElementById("savePODToDbButton").addEventListener("click", function () {
+                    fetch('@Url.Action("SavePODToDb", "Frontend")', {
+                        method: 'POST'
+                    }).then(response => response.json())
+                        .then(data => logMessage(data))
+                        .catch(error => logMessage('Error: ' + error));
+                });
+
+                document.getElementById("savePOHToDbButton").addEventListener("click", function () {
+                    fetch('@Url.Action("SavePOHToDb", "Frontend")', {
+                        method: 'POST'
+                    }).then(response => response.json())
+                        .then(data => logMessage(data))
+                        .catch(error => logMessage('Error: ' + error));
+                });
+
+                // Connect to the SignalR hub
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/updateHub")
+                    .build();
+
+                connection.on("ReceiveLatestDateUpdate", function (date) {
+                    document.getElementById("autoSendTextBox").value = new Date(date).toLocaleString();
+                });
+
+                connection.start().catch(function (err) {
+                    return console.error(err.toString());
+                });
+            });
+
+            function logMessage(message) {
+                const logs = document.getElementById("richTextBoxLogs");
+                logs.value += message + '\n';
+                logs.scrollTop = logs.scrollHeight; // Scroll to the bottom
+            }
+        </script>
     </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById("savePODToDbButton").addEventListener("click", function () {
-                fetch('@Url.Action("SavePODToDb", "Frontend")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                }).then(data => logMessage(data))
-                    .catch(error => logMessage('Error: ' + error.message));
-            });
-
-            document.getElementById("savePOHToDbButton").addEventListener("click", function () {
-                fetch('@Url.Action("SavePOHToDb", "Frontend")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                }).then(data => logMessage(data))
-                    .catch(error => logMessage('Error: ' + error.message));
-            });
-
-            // Add similar event listeners for other buttons if needed
-        });
-
-        function logMessage(message) {
-            const logs = document.getElementById("richTextBoxLogs");
-            logs.value += message + '\n';
-            logs.scrollTop = logs.scrollHeight; // Scroll to the bottom
-        }
-    </script>
 </body>
 </html>

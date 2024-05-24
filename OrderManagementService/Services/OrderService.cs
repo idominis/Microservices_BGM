@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
@@ -326,6 +327,9 @@ namespace OrderManagementService.Services
                             {
                                 latestDate = resultFileDate;
                                 LatestDateUpdated?.Invoke(resultFileDate.Value);
+
+                                // Send the latest date update to clients via SignalR
+                                //await _hubContext.Clients.All.SendAsync("ReceiveLatestDateUpdate", resultFileDate.Value);
                             }
                         }
                     }

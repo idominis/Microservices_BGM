@@ -23,6 +23,8 @@ foreach (var (serviceName, baseAddress) in baseAddresses)
     });
 }
 
+// Add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
