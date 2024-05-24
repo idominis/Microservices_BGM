@@ -16,5 +16,7 @@ namespace DataAccessService.Services
         Task<HashSet<int>> FetchAlreadySentPurchaseOrderIdsAsync();
         Task<bool> UpdatePurchaseOrderStatusAsync(int purchaseOrderId, int purchaseOrderDetailId, bool processed, bool sent, int channel);
         Task<DateTime?> GetLatestDateForPurchaseOrderAsync(int purchaseOrderId);
+        Task<DateTime?> GetLatestDateSentForPurchaseOrderAsync(int purchaseOrderId);
+        Task<DateTime?> GetLatestDateGeneratedForPurchaseOrderAsync(int purchaseOrderId);
     }
 }

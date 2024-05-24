@@ -120,6 +120,10 @@
                     document.getElementById("autoSendTextBox").value = new Date(date).toLocaleString();
                 });
 
+                connection.on("ReceiveLatestDateGeneratedUpdate", function (date) {
+                    document.getElementById("lastDateGeneratedTextBox").value = new Date(date).toLocaleString();
+                });
+
                 connection.start().catch(function (err) {
                     return console.error(err.toString());
                 });

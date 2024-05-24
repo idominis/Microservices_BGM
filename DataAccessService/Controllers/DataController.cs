@@ -103,6 +103,17 @@ namespace DataAccessService.Controllers
             return await _dataService.GetLatestDateForPurchaseOrderAsync(purchaseOrderId);
         }
 
+        [HttpGet("get-po-latest-sent-date/{purchaseOrderId}")]
+        public async Task<DateTime?> GetLatestDateSentForPurchaseOrder(int purchaseOrderId)
+        {
+            return await _dataService.GetLatestDateSentForPurchaseOrderAsync(purchaseOrderId);
+        }
+
+        [HttpGet("get-po-latest-generated-date/{purchaseOrderId}")]
+        public async Task<DateTime?> GetLatestDateGeneratedForPurchaseOrder(int purchaseOrderId)
+        {
+            return await _dataService.GetLatestDateGeneratedForPurchaseOrderAsync(purchaseOrderId);
+        }
 
     }
 }

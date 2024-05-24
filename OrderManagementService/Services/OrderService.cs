@@ -168,69 +168,97 @@ namespace OrderManagementService.Services
 
         public async Task<bool> GenerateXmlAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
-            var responseAlreadyGeneratedSummaries = await _dataAccessServiceClient.GetAsync("api/data/fetch-generated");
-
-            if (!responseAlreadyGeneratedSummaries.IsSuccessStatusCode)
+            try
             {
-                // Handle the error
-                var error = await responseAlreadyGeneratedSummaries.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to fetch generated summaries: {error}");
-            }
+                var responseAlreadyGeneratedSummaries = await _dataAccessServiceClient.GetAsync("api/data/fetch-generated");
 
-            var resultAlreadyGeneratedSummaries = await responseAlreadyGeneratedSummaries.Content.ReadFromJsonAsync<HashSet<int>>();
-
-            var fetchSummariesRequest = new FetchSummariesRequestDto
-            {
-                AlreadyGeneratedIds = resultAlreadyGeneratedSummaries,
-                StartDate = startDate,
-                EndDate = endDate
-            };
-
-            var responseSummariesToGenerate = await _dataAccessServiceClient.PostAsJsonAsync("api/data/fetch-summaries-to-generate", fetchSummariesRequest);
-
-            if (!responseSummariesToGenerate.IsSuccessStatusCode)
-            {
-                // Handle the error
-                var error = await responseSummariesToGenerate.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to fetch summaries to generate: {error}");
-            }
-
-            var summariesToGenerate = await responseSummariesToGenerate.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
-
-            // Proceed with generating XML for summariesToGenerate
-            if (summariesToGenerate == null || summariesToGenerate.Count == 0)
-            {
-                Log.Information("No summaries to generate XML for.");
-                return true;
-            }
-
-            var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", summariesToGenerate);
-
-            if (responseResult.IsSuccessStatusCode)
-            {
-                // Loop through the summaries and create/upload the corresponding XML files
-                foreach (var summary in summariesToGenerate)
+                if (!responseAlreadyGeneratedSummaries.IsSuccessStatusCode)
                 {
-                    var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{summary.PurchaseOrderDetailID}/{true}/{false}/{0}", null); // Mark as processed, not sent, base channel
-                    if (responseUpdateStatus.IsSuccessStatusCode)
-                    {
-                        Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} created");
-                    }
-                    else
-                    {
-                        Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} failed to create");
-                    }
+                    var error = await responseAlreadyGeneratedSummaries.Content.ReadAsStringAsync();
+                    throw new Exception($"Failed to fetch generated summaries: {error}");
                 }
 
-                _logger.LogInformation("XML generated successfully!");
-                return true;
+                var resultAlreadyGeneratedSummaries = await responseAlreadyGeneratedSummaries.Content.ReadFromJsonAsync<HashSet<int>>();
+
+                var fetchSummariesRequest = new FetchSummariesRequestDto
+                {
+                    AlreadyGeneratedIds = resultAlreadyGeneratedSummaries,
+                    StartDate = startDate,
+                    EndDate = endDate
+                };
+
+                var responseSummariesToGenerate = await _dataAccessServiceClient.PostAsJsonAsync("api/data/fetch-summaries-to-generate", fetchSummariesRequest);
+
+                if (!responseSummariesToGenerate.IsSuccessStatusCode)
+                {
+                    var error = await responseSummariesToGenerate.Content.ReadAsStringAsync();
+                    throw new Exception($"Failed to fetch summaries to generate: {error}");
+                }
+
+                var summariesToGenerate = await responseSummariesToGenerate.Content.ReadFromJsonAsync<List<PurchaseOrderSummaryDto>>();
+
+                if (summariesToGenerate == null || summariesToGenerate.Count == 0)
+                {
+                    Log.Information("No summaries to generate XML for.");
+                    return true;
+                }
+
+                var responseResult = await _fileManagementServiceClient.PostAsJsonAsync("api/FileManagementService/generate-xml", summariesToGenerate);
+
+                if (responseResult.IsSuccessStatusCode)
+                {
+                    foreach (var summary in summariesToGenerate)
+                    {
+                        var responseUpdateStatus = await _dataAccessServiceClient.PutAsync($"api/data/update-po-status/{summary.PurchaseOrderID}/{summary.PurchaseOrderDetailID}/{true}/{false}/{0}", null); // Mark as processed, not sent, base channel
+                        if (responseUpdateStatus.IsSuccessStatusCode)
+                        {
+                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} created");
+                        }
+                        else
+                        {
+                            Log.Information($"PurchaseOrderId: {summary.PurchaseOrderID} with PurchaseOrderDetailId: {summary.PurchaseOrderDetailID} failed to create");
+                        }
+                    }
+
+                    // Get the latest generated date and notify the frontend
+                    foreach (var summary in summariesToGenerate)
+                    {
+                        var responseFileDate = await _dataAccessServiceClient.GetAsync($"api/data/get-po-latest-generated-date/{summary.PurchaseOrderID}");
+                        if (responseFileDate.IsSuccessStatusCode)
+                        {
+                            var resultFileDate = await responseFileDate.Content.ReadFromJsonAsync<DateTime?>();
+                            if (resultFileDate.HasValue)
+                            {
+                                var notifyResponse = await _frontendServiceClient.PostAsJsonAsync("api/frontend/notify-latest-date-generated", resultFileDate.Value);
+                                if (!notifyResponse.IsSuccessStatusCode)
+                                {
+                                    Log.Error($"Failed to notify frontend about latest generated date update: {notifyResponse.StatusCode}");
+                                }
+                            }
+                        }
+                    }
+
+                    _logger.LogInformation("XML generated successfully!");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", responseResult.StatusCode);
+                    return false;
+                }
             }
-            else
+            catch (HttpRequestException ex)
             {
-                _logger.LogError("Failed to generate XML. StatusCode: {StatusCode}", responseResult.StatusCode);
+                Log.Error(ex, "HTTP request failed.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "An unexpected error occurred.");
                 return false;
             }
         }
+
 
 
         public async Task<bool> SendXmlAsync()
@@ -321,7 +349,7 @@ namespace OrderManagementService.Services
                             }
                         }
 
-                        var responseFileDate = await _dataAccessServiceClient.GetAsync($"api/data/get-po-latest-date/{orderId}");
+                        var responseFileDate = await _dataAccessServiceClient.GetAsync($"api/data/get-po-latest-sent-date/{orderId}");
                         if (responseFileDate.IsSuccessStatusCode)
                         {
                             var resultFileDate = await responseFileDate.Content.ReadFromJsonAsync<DateTime?>();

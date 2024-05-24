@@ -34,6 +34,14 @@ namespace FrontendService.Controllers
             return Ok();
         }
 
+        [HttpPost("notify-latest-date-generated")]
+        public async Task<IActionResult> NotifyLatestDateGenerated([FromBody] DateTime latestDate)
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateGeneratedUpdate", latestDate);
+            return Ok();
+        }
+
+
         [HttpPost("save-pod")]
         public async Task<IActionResult> SavePODToDb()
         {

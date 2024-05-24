@@ -231,7 +231,53 @@ namespace DataAccessService.Services
             return latestDate;
         }
 
+        public async Task<DateTime?> GetLatestDateSentForPurchaseOrderAsync(int purchaseOrderId)
+        {
+            // Get the highest PurchaseOrderId from the table Purchasing.PurchaseOrdersProcessedSent where OrderSent is true
+            var maxPurchaseOrderId = await _context.PurchaseOrdersProcessedSents
+                                                   .Where(x => x.PurchaseOrderId == purchaseOrderId && x.OrderSent)
+                                                   .OrderByDescending(x => x.PurchaseOrderId)
+                                                   .Select(x => x.PurchaseOrderId)
+                                                   .FirstOrDefaultAsync();
 
+            if (maxPurchaseOrderId == 0)
+            {
+                return null;
+            }
+
+            // Fetch the OrderDate from the view Purchasing.vPurchaseOrderSummary
+            var latestOrderSentDate = await _context.VPurchaseOrderSummaries
+                                                .Where(x => x.PurchaseOrderId == maxPurchaseOrderId)
+                                                .Select(x => x.OrderDate)
+                                                .FirstOrDefaultAsync();
+
+            return latestOrderSentDate;
+        }
+
+
+        //GetLatestDateGeneratedForPurchaseOrderAsync
+        public async Task<DateTime?> GetLatestDateGeneratedForPurchaseOrderAsync(int purchaseOrderId)
+        {
+            // Get the highest PurchaseOrderId from the table Purchasing.PurchaseOrdersProcessedSent where OrderProcessed is true
+            var maxPurchaseOrderId = await _context.PurchaseOrdersProcessedSents
+                                                   .Where(x => x.PurchaseOrderId == purchaseOrderId && x.OrderProcessed)
+                                                   .OrderByDescending(x => x.PurchaseOrderId)
+                                                   .Select(x => x.PurchaseOrderId)
+                                                   .FirstOrDefaultAsync();
+
+            if (maxPurchaseOrderId == 0)
+            {
+                return null;
+            }
+
+            // Fetch the OrderDate from the view Purchasing.vPurchaseOrderSummary
+            var latestOrderSentDate = await _context.VPurchaseOrderSummaries
+                                                .Where(x => x.PurchaseOrderId == maxPurchaseOrderId)
+                                                .Select(x => x.OrderDate)
+                                                .FirstOrDefaultAsync();
+
+            return latestOrderSentDate;
+        }
 
     }
 }
