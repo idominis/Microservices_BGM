@@ -1,3 +1,4 @@
+using FrontendService.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -25,6 +26,7 @@ foreach (var (serviceName, baseAddress) in baseAddresses)
 
 // Add SignalR
 builder.Services.AddSignalR();
+
 
 var app = builder.Build();
 
@@ -55,5 +57,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Frontend}/{action=Index}/{id?}");
+
+app.MapHub<UpdateHub>("/updateHub");
 
 app.Run();

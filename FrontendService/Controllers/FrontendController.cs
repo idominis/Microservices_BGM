@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FrontendService.Hubs;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -9,10 +11,12 @@ namespace FrontendService.Controllers
     public class FrontendController : Controller
     {
         private readonly HttpClient _orderManagementServiceClient;
+        private readonly IHubContext<UpdateHub> _hubContext;
 
-        public FrontendController(IHttpClientFactory httpClientFactory)
+        public FrontendController(IHttpClientFactory httpClientFactory, IHubContext<UpdateHub> hubContext)
         {
             _orderManagementServiceClient = httpClientFactory.CreateClient("OrderManagementService");
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -21,6 +25,13 @@ namespace FrontendService.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpPost("notify-latest-date")]
+        public async Task<IActionResult> NotifyLatestDate([FromBody] DateTime latestDate)
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateUpdate", latestDate);
+            return Ok();
         }
 
         [HttpPost("save-pod")]

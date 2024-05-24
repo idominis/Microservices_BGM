@@ -19,6 +19,7 @@ namespace OrderManagementService.Services
         private readonly HttpClient _sftpCommunicationServiceClient;
         private readonly HttpClient _dataAccessServiceClient;
         private readonly ILogger<OrderService> _logger;
+        private readonly HttpClient _frontendServiceClient;
         public event Action<DateTime> LatestDateUpdated;
 
         public OrderService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<OrderService> logger)
@@ -26,6 +27,7 @@ namespace OrderManagementService.Services
             _fileManagementServiceClient = httpClientFactory.CreateClient("FileManagementServiceClient");
             _sftpCommunicationServiceClient = httpClientFactory.CreateClient("SFTPCommunicationServiceClient");
             _dataAccessServiceClient = httpClientFactory.CreateClient("DataAccessServiceClient");
+            _frontendServiceClient = httpClientFactory.CreateClient("FrontendServiceClient");
             _logger = logger;
         }
 
@@ -328,8 +330,12 @@ namespace OrderManagementService.Services
                                 latestDate = resultFileDate;
                                 LatestDateUpdated?.Invoke(resultFileDate.Value);
 
-                                // Send the latest date update to clients via SignalR
-                                //await _hubContext.Clients.All.SendAsync("ReceiveLatestDateUpdate", resultFileDate.Value);
+                                // Send the latest date update to clients via FrontendService
+                                var notifyResponse = await _frontendServiceClient.PostAsJsonAsync("api/frontend/notify-latest-date", resultFileDate.Value);
+                                if (!notifyResponse.IsSuccessStatusCode)
+                                {
+                                    Log.Error($"Failed to notify frontend about latest date update: {notifyResponse.StatusCode}");
+                                }
                             }
                         }
                     }

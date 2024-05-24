@@ -24,6 +24,10 @@ builder.Services.AddHttpClient("DataAccessServiceClient", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["BaseAddresses:DataAccessService"]);
 });
+builder.Services.AddHttpClient("FrontendServiceClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["BaseAddresses:FrontendService"]);
+});
 
 // Register IOrderService
 builder.Services.AddScoped<IOrderService, OrderService>();

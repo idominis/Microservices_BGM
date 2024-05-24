@@ -97,7 +97,7 @@ namespace DataAccessService.Controllers
             return await _dataService.UpdatePurchaseOrderStatusAsync(purchaseOrderId, purchaseOrderDetailId, processed, sent, channel);
         }
 
-        [HttpGet("get-po-latest-date")]
+        [HttpGet("get-po-latest-date/{purchaseOrderId}")]
         public async Task<DateTime?> GetLatestDateForPurchaseOrder(int purchaseOrderId)
         {
             return await _dataService.GetLatestDateForPurchaseOrderAsync(purchaseOrderId);
