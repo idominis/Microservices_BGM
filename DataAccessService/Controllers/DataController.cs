@@ -115,5 +115,13 @@ namespace DataAccessService.Controllers
             return await _dataService.GetLatestDateGeneratedForPurchaseOrderAsync(purchaseOrderId);
         }
 
+        [HttpGet("effective-date-range")]
+        public async Task<IActionResult> GetEffectiveDateRange()
+        {
+            var (earliestDate, latestDate) = await _dataService.GetEffectiveDateRangeAsync();
+            return Ok(new { earliestDate, latestDate });
+        }
+
+
     }
 }

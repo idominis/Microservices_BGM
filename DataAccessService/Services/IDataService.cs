@@ -18,5 +18,8 @@ namespace DataAccessService.Services
         Task<DateTime?> GetLatestDateForPurchaseOrderAsync(int purchaseOrderId);
         Task<DateTime?> GetLatestDateSentForPurchaseOrderAsync(int purchaseOrderId);
         Task<DateTime?> GetLatestDateGeneratedForPurchaseOrderAsync(int purchaseOrderId);
+        //Task<(DateTime? earliestDate, DateTime? latestDate)> GetOrderDateRangeAsync();
+        //Task<DateTime?> GetLatestGeneratedDateAsync();
+        Task<(DateTime? earliestDate, DateTime? latestDate)> GetEffectiveDateRangeAsync();
     }
 }

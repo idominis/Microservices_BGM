@@ -393,8 +393,8 @@ namespace OrderManagementService.Services
             {
                 var dateRange = new DateRangeDto
                 {
-                    StartDate = startDate,
-                    EndDate = endDate
+                    EarliestDate = startDate,
+                    LatestDate = endDate
                 };
 
                 // Retrieve all purchase order summaries within the specified date range
@@ -650,12 +650,22 @@ namespace OrderManagementService.Services
                         //_errorHandler.LogError(ex, "Error loading or processing XML data", xmlFile, "XMLProcessing");
                     }
                 }
-
-
             }
-
 
             return allPurchaseOrderHeaders;
         }
+
+        public async Task<(DateTime? earliestDate, DateTime? latestDate)> GetOrderDateRangeAsync()
+        {
+            var response = await _dataAccessServiceClient.GetAsync("api/data/effective-date-range");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to fetch order date range: {response.StatusCode}");
+            }
+
+            var dateRange = await response.Content.ReadFromJsonAsync<DateRangeDto>();
+            return (dateRange?.EarliestDate, dateRange?.LatestDate);
+        }
+
     }
 }

@@ -18,6 +18,7 @@ namespace OrderManagementService.Services
         Task<bool> SendDateGeneratedXmlAsync(DateTime startDate, DateTime endDate);
         Task<List<PurchaseOrderDetailDto>> FetchPODetailsAsync();
         Task<List<PurchaseOrderHeaderDto>> FetchPOHeadersAsync();
-        
+        Task<(DateTime? earliestDate, DateTime? latestDate)> GetOrderDateRangeAsync();
+
     }
 }

@@ -15,10 +15,11 @@
             <div class="mb-3">
                 <button type="button" id="serviceStartButton" class="btn btn-primary">Service Start</button>
                 <button type="button" id="serviceStopButton" class="btn btn-secondary">Service Stop</button>
+                <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
             </div>
 
             <fieldset class="border p-2 mb-3">
-                <legend class="w-auto">Auto</legend>
+                <legend class="w-auto">Save Xml to Db</legend>
                 <div class="form-group">
                     <button type="button" id="savePODToDbButton" class="btn btn-success">Save POD to DB</button>
                     <button type="button" id="savePOHToDbButton" class="btn btn-success">Save POH to DB</button>
@@ -38,20 +39,18 @@
             </fieldset>
 
             <fieldset class="border p-2 mb-3">
-                <legend class="w-auto">Generate & Send XML</legend>
+                <legend class="w-auto">Generate &amp; Send XML</legend>
                 <div class="form-group">
                     <label for="comboBoxStartDate">Start Date:</label>
                     <select id="comboBoxStartDate" class="form-control" style="width: auto; display: inline-block;">
-                        <option value="2021-01-01">2021-01-01</option>
-                        <option value="2021-02-01">2021-02-01</option>
+                        <!-- Options will be populated dynamically -->
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="comboBoxEndDate">End Date:</label>
                     <select id="comboBoxEndDate" class="form-control" style="width: auto; display: inline-block;">
-                        <option value="2021-03-01">2021-03-01</option>
-                        <option value="2021-04-01">2021-04-01</option>
+                        <!-- Options will be populated dynamically -->
                     </select>
                 </div>
 
@@ -75,21 +74,16 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    <label for="autoSendTextBox">Last Date Sent:</label>
-                    <input type="text" id="autoSendTextBox" class="form-control" readonly />
-                </div>
-                <div class="col-md-6">
                     <label for="lastDateGeneratedTextBox">Last Date Generated:</label>
                     <input type="text" id="lastDateGeneratedTextBox" class="form-control" readonly />
                 </div>
+                <div class="col-md-6">
+                    <label for="autoSendTextBox">Last Date Sent:</label>
+                    <input type="text" id="autoSendTextBox" class="form-control" readonly />
+                </div>
             </div>
-
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 20px;">
                 <textarea id="richTextBoxLogs" class="form-control" rows="10" readonly></textarea>
-            </div>
-
-            <div class="form-group">
-                <button type="button" id="exitAppButton" class="btn btn-danger">Exit App</button>
             </div>
         </form>
 
@@ -127,7 +121,40 @@
                 connection.start().catch(function (err) {
                     return console.error(err.toString());
                 });
+
+                // Fetch date range for combo boxes
+                fetch('/api/frontend/get-order-date-range')
+                    .then(response => response.json())
+                    .then(data => {
+                        populateDateRange(data.earliestDate, data.latestDate);
+                    })
+                    .catch(error => console.error('Error fetching date range:', error));
             });
+
+            function populateDateRange(earliestDate, latestDate) {
+                const startDateSelect = document.getElementById('comboBoxStartDate');
+                const endDateSelect = document.getElementById('comboBoxEndDate');
+
+                const start = new Date(earliestDate);
+                const end = new Date(latestDate);
+
+                let currentDate = new Date(start);
+
+                while (currentDate <= end) {
+                    const dateString = currentDate.toISOString().split('T')[0];
+                    const startOption = document.createElement('option');
+                    startOption.value = dateString;
+                    startOption.text = dateString;
+                    startDateSelect.appendChild(startOption);
+
+                    const endOption = document.createElement('option');
+                    endOption.value = dateString;
+                    endOption.text = dateString;
+                    endDateSelect.appendChild(endOption);
+
+                    currentDate.setDate(currentDate.getDate() + 1); // Increment by one day
+                }
+            }
 
             function logMessage(message) {
                 const logs = document.getElementById("richTextBoxLogs");
@@ -135,6 +162,7 @@
                 logs.scrollTop = logs.scrollHeight; // Scroll to the bottom
             }
         </script>
+
     </div>
 </body>
 </html>

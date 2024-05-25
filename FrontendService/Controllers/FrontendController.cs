@@ -1,4 +1,5 @@
-﻿using FrontendService.Hubs;
+﻿using FrontendService.DTO;
+using FrontendService.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Net.Http;
@@ -26,6 +27,27 @@ namespace FrontendService.Controllers
         {
             return View();
         }
+
+        [HttpGet("get-order-date-range")]
+        public async Task<IActionResult> GetOrderDateRange()
+        {
+            var response = await _orderManagementServiceClient.GetAsync("api/orders/get-order-date-range");
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to fetch order date range.");
+            }
+
+            var dateRange = await response.Content.ReadFromJsonAsync<DateRangeDto>();
+            if (dateRange == null || dateRange.EarliestDate == null || dateRange.LatestDate == null)
+            {
+                return StatusCode(500, "Failed to fetch order date range.");
+            }
+
+            return Ok(new { earliestDate = dateRange.EarliestDate, latestDate = dateRange.LatestDate });
+        }
+
+
+
 
         [HttpPost("notify-latest-date")]
         public async Task<IActionResult> NotifyLatestDate([FromBody] DateTime latestDate)

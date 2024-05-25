@@ -279,5 +279,56 @@ namespace DataAccessService.Services
             return latestOrderSentDate;
         }
 
+        private async Task<(DateTime? earliestDate, DateTime? latestDate)> GetOrderDateRangeAsync()
+        {
+            var earliestDate = await _context.VPurchaseOrderSummaries
+                                             .OrderBy(x => x.OrderDate)
+                                             .Select(x => x.OrderDate)
+                                             .FirstOrDefaultAsync();
+
+            var latestDate = await _context.VPurchaseOrderSummaries
+                                           .OrderByDescending(x => x.OrderDate)
+                                           .Select(x => x.OrderDate)
+                                           .FirstOrDefaultAsync();
+
+            return (earliestDate, latestDate);
+        }
+
+        private async Task<DateTime?> GetLatestGeneratedDateAsync()
+        {
+            // Fetch the latest processed purchase order detail
+            var latestProcessedOrder = await _context.PurchaseOrdersProcessedSents
+                                                     .Where(x => x.OrderProcessed == true)
+                                                     .OrderByDescending(x => x.ModifiedDate)
+                                                     .FirstOrDefaultAsync();
+
+            if (latestProcessedOrder == null)
+            {
+                return null;
+            }
+
+            // Fetch the corresponding order date from vPurchaseOrderSummary using the PurchaseOrderId
+            var latestOrderDate = await _context.VPurchaseOrderSummaries
+                                                .Where(x => x.PurchaseOrderId == latestProcessedOrder.PurchaseOrderId)
+                                                .Select(x => x.OrderDate)
+                                                .FirstOrDefaultAsync();
+
+            return latestOrderDate;
+        }
+
+        public async Task<(DateTime? earliestDate, DateTime? latestDate)> GetEffectiveDateRangeAsync()
+        {
+            var (earliestDate, latestDate) = await GetOrderDateRangeAsync();
+            var latestGeneratedDate = await GetLatestGeneratedDateAsync();
+
+            if (latestGeneratedDate.HasValue && latestGeneratedDate > latestDate)
+            {
+                latestDate = latestGeneratedDate;
+            }
+
+            return (earliestDate, latestDate);
+        }
+
+
     }
 }

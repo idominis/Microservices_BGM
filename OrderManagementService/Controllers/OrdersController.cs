@@ -167,6 +167,17 @@ namespace OrderManagementService.Controllers
             }
         }
 
+        [HttpGet("get-order-date-range")]
+        public async Task<IActionResult> GetOrderDateRange()
+        {
+            var (earliestDate, latestDate) = await _orderService.GetOrderDateRangeAsync();
+            if (earliestDate == null || latestDate == null)
+            {
+                return StatusCode(500, "Failed to fetch order date range.");
+            }
+
+            return Ok(new { earliestDate, latestDate });
+        }
 
     }
 }

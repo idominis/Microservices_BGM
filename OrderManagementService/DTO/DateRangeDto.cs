@@ -2,7 +2,7 @@
 {
     public class DateRangeDto
     {
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTime EarliestDate { get; set; }
+        public DateTime LatestDate { get; set; }
     }
 }
