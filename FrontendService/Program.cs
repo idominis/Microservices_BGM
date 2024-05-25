@@ -59,5 +59,6 @@ app.MapControllerRoute(
     pattern: "{controller=Frontend}/{action=Index}/{id?}");
 
 app.MapHub<UpdateHub>("/updateHub");
+app.MapHub<LogHub>("/logHub");
 
 app.Run();

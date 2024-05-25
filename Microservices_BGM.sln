@@ -3,25 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthenticationService", "AuthenticationService\AuthenticationService.csproj", "{40310536-C63F-49A5-A976-96A172B45E63}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthenticationService", "AuthenticationService\AuthenticationService.csproj", "{40310536-C63F-49A5-A976-96A172B45E63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderManagementService", "OrderManagementService\OrderManagementService.csproj", "{2350AFD5-4698-4212-91F8-3503F28D4CB5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderManagementService", "OrderManagementService\OrderManagementService.csproj", "{2350AFD5-4698-4212-91F8-3503F28D4CB5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileManagementService", "FileManagementService\FileManagementService.csproj", "{1A11526F-4844-4BB6-8DF9-1D35970089D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileManagementService", "FileManagementService\FileManagementService.csproj", "{1A11526F-4844-4BB6-8DF9-1D35970089D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFTPCommunicationService", "SFTPCommunicationService\SFTPCommunicationService.csproj", "{AD1C2452-3FFB-4F75-81F9-589135F9A20F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFTPCommunicationService", "SFTPCommunicationService\SFTPCommunicationService.csproj", "{AD1C2452-3FFB-4F75-81F9-589135F9A20F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessService", "DataAccessService\DataAccessService.csproj", "{2762730C-56A8-4783-9F69-9D6FDFCC04EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccessService", "DataAccessService\DataAccessService.csproj", "{2762730C-56A8-4783-9F69-9D6FDFCC04EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "NotificationService\NotificationService.csproj", "{D6236185-B3B4-449D-8C32-04B4022A5D0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationService", "NotificationService\NotificationService.csproj", "{D6236185-B3B4-449D-8C32-04B4022A5D0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoggingService", "LoggingService\LoggingService.csproj", "{089A5994-9FD0-4FE3-899B-C70D61543203}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoggingService", "LoggingService\LoggingService.csproj", "{089A5994-9FD0-4FE3-899B-C70D61543203}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIGateway", "APIGateway\APIGateway.csproj", "{06F6879B-A137-4B2F-A881-2D81C6ADA3A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIGateway", "APIGateway\APIGateway.csproj", "{06F6879B-A137-4B2F-A881-2D81C6ADA3A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigurationService", "ConfigurationService\ConfigurationService.csproj", "{9D894684-AFDA-4DAB-99DF-0F61BDAA82BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConfigurationService", "ConfigurationService\ConfigurationService.csproj", "{9D894684-AFDA-4DAB-99DF-0F61BDAA82BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontendService", "FrontendService\FrontendService.csproj", "{77C63268-009C-4724-9F5D-92BB4176FB4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrontendService", "FrontendService\FrontendService.csproj", "{77C63268-009C-4724-9F5D-92BB4176FB4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedLibrary", "SharedLibrary\SharedLibrary.csproj", "{E2C7A751-ED7E-43BA-A46C-2A1818AA7A9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{77C63268-009C-4724-9F5D-92BB4176FB4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77C63268-009C-4724-9F5D-92BB4176FB4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77C63268-009C-4724-9F5D-92BB4176FB4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2C7A751-ED7E-43BA-A46C-2A1818AA7A9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2C7A751-ED7E-43BA-A46C-2A1818AA7A9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2C7A751-ED7E-43BA-A46C-2A1818AA7A9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2C7A751-ED7E-43BA-A46C-2A1818AA7A9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

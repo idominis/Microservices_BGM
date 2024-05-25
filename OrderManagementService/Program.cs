@@ -2,9 +2,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OrderManagementService.Services;
+using Serilog;
+using SharedLibrary;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+var loggingServiceUrl = builder.Configuration["BaseAddresses:LoggingService"] + "/api/logs";
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.Sink(new LoggingServiceSink(new HttpClient(), loggingServiceUrl))
+);
 
 // Add services to the container.
 builder.Services.AddControllers();

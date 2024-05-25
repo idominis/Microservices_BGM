@@ -74,11 +74,11 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    <label for="lastDateGeneratedTextBox">Last Date Generated:</label>
+                    <label for="lastDateGeneratedTextBox">Latest Date Generated:</label>
                     <input type="text" id="lastDateGeneratedTextBox" class="form-control" readonly />
                 </div>
                 <div class="col-md-6">
-                    <label for="autoSendTextBox">Last Date Sent:</label>
+                    <label for="autoSendTextBox">Latest Date Sent:</label>
                     <input type="text" id="autoSendTextBox" class="form-control" readonly />
                 </div>
             </div>
@@ -92,7 +92,7 @@
                 document.getElementById("savePODToDbButton").addEventListener("click", function () {
                     fetch('@Url.Action("SavePODToDb", "Frontend")', {
                         method: 'POST'
-                    }).then(response => response.json())
+                    }).then(response => response.text())
                         .then(data => logMessage(data))
                         .catch(error => logMessage('Error: ' + error));
                 });
@@ -100,7 +100,23 @@
                 document.getElementById("savePOHToDbButton").addEventListener("click", function () {
                     fetch('@Url.Action("SavePOHToDb", "Frontend")', {
                         method: 'POST'
-                    }).then(response => response.json())
+                    }).then(response => response.text())
+                        .then(data => logMessage(data))
+                        .catch(error => logMessage('Error: ' + error));
+                });
+
+                document.getElementById("generateXmlButton").addEventListener("click", function () {
+                    fetch('/api/frontend/generate-xml', {
+                        method: 'POST'
+                    }).then(response => response.text())
+                        .then(data => logMessage(data))
+                        .catch(error => logMessage('Error: ' + error));
+                });
+
+                document.getElementById("sendXmlButton").addEventListener("click", function () {
+                    fetch('/api/frontend/send-xml', {
+                        method: 'POST'
+                    }).then(response => response.text())
                         .then(data => logMessage(data))
                         .catch(error => logMessage('Error: ' + error));
                 });
@@ -116,6 +132,10 @@
 
                 connection.on("ReceiveLatestDateGeneratedUpdate", function (date) {
                     document.getElementById("lastDateGeneratedTextBox").value = new Date(date).toLocaleString();
+                });
+
+                connection.on("ReceiveLogMessage", function (logMessage) {
+                    logMessage(`${logMessage.Timestamp} [${logMessage.Level}] ${logMessage.Message} ${logMessage.Exception || ''}`);
                 });
 
                 connection.start().catch(function (err) {
