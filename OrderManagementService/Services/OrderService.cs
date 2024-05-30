@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using FrontendService.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -21,13 +22,15 @@ namespace OrderManagementService.Services
         private readonly ILogger<OrderService> _logger;
         private readonly HttpClient _frontendServiceClient;
         public event Action<DateTime> LatestDateUpdated;
+        private readonly IHubContext<UpdateHub> _hubContext;
 
-        public OrderService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<OrderService> logger)
+        public OrderService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<OrderService> logger, IHubContext<UpdateHub> hubContext)
         {
             _fileManagementServiceClient = httpClientFactory.CreateClient("FileManagementServiceClient");
             _sftpCommunicationServiceClient = httpClientFactory.CreateClient("SFTPCommunicationServiceClient");
             _dataAccessServiceClient = httpClientFactory.CreateClient("DataAccessServiceClient");
             _frontendServiceClient = httpClientFactory.CreateClient("FrontendServiceClient");
+            _hubContext = hubContext;
             _logger = logger;
         }
 
@@ -359,7 +362,7 @@ namespace OrderManagementService.Services
                                 LatestDateUpdated?.Invoke(resultFileDate.Value);
 
                                 // Send the latest date update to clients via FrontendService
-                                var notifyResponse = await _frontendServiceClient.PostAsJsonAsync("api/frontend/notify-latest-date", resultFileDate.Value);
+                                var notifyResponse = await _frontendServiceClient.PostAsJsonAsync("api/frontend/notify-latest-date-sent", resultFileDate.Value);
                                 if (!notifyResponse.IsSuccessStatusCode)
                                 {
                                     Log.Error($"Failed to notify frontend about latest date update: {notifyResponse.StatusCode}");
@@ -667,5 +670,14 @@ namespace OrderManagementService.Services
             return (dateRange?.EarliestDate, dateRange?.LatestDate);
         }
 
+        private async Task NotifyLatestDateUpdate(DateTime date)
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateSentUpdate", date);
+        }
+
+        private async Task NotifyLatestDateGeneratedUpdate(DateTime date)
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateGeneratedUpdate", date);
+        }
     }
 }

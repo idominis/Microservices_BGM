@@ -126,7 +126,7 @@
                     .withUrl("/updateHub")
                     .build();
 
-                connection.on("ReceiveLatestDateUpdate", function (date) {
+                connection.on("ReceiveLatestDateSentUpdate", function (date) {
                     document.getElementById("autoSendTextBox").value = new Date(date).toLocaleString();
                 });
 

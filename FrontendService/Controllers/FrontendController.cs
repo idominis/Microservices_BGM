@@ -49,10 +49,10 @@ namespace FrontendService.Controllers
 
 
 
-        [HttpPost("notify-latest-date")]
+        [HttpPost("notify-latest-date-sent")]
         public async Task<IActionResult> NotifyLatestDate([FromBody] DateTime latestDate)
         {
-            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateUpdate", latestDate);
+            await _hubContext.Clients.All.SendAsync("ReceiveLatestDateSentUpdate", latestDate);
             return Ok();
         }
 
